@@ -1,11 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-# Importing ServiceProvider from the accounts app models
 from accounts.models import ServiceProvider
 
-# 1. Booking model: Stores details about a service appointment
 class Booking(models.Model):
-    # Choices for the booking status
+    """
+    Represents a service request made by a user to a specific service provider.
+    """
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
@@ -13,59 +13,60 @@ class Booking(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    # The user who is making the booking (Customer)
+    # The user who made the booking
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     
-    # The professional being booked (from the accounts app)
-    provider = models.ForeignKey(ServiceProvider, on_delete=models.CASCADE, related_name='bookings')
+    # The service provider being booked
+    provider = models.ForeignKey(ServiceProvider, on_delete=models.CASCADE, related_name='provider_bookings')
     
-    # The date the service will take place
+    # The date the service is requested for
     service_date = models.DateField()
     
-    # The specific time for the service
+    # The specific time the service is requested for
     service_time = models.TimeField()
     
-    # Detailed notes on what the user needs help with
+    # Details about what service is needed
     description = models.TextField()
     
-    # Current state of the booking, defaults to 'pending'
+    # The current status of the booking request (defaults to pending)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
-    # Automatically records when this entry was created
+    # Automatically set to the exact date and time the booking was created
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Booking: {self.user.username} with {self.provider.user.username}"
+        return f"Booking by {self.user.username} for {self.provider.user.username} on {self.service_date}"
 
 
-# 2. Review model: Stores feedback left by users after a service
-class Review(models.Project):
-    # Rating options from 1 to 5 stars
+class Review(models.Model):
+    """
+    Represents a review left by a user for a service provider after a booking.
+    """
     RATING_CHOICES = [
-        (1, '1'),
-        (2, '2'),
-        (3, '3'),
-        (4, '4'),
-        (5, '5'),
+        (1, '1 - Very Poor'),
+        (2, '2 - Poor'),
+        (3, '3 - Average'),
+        (4, '4 - Good'),
+        (5, '5 - Excellent'),
     ]
 
-    # Links this review to a specific booking (one review per booking)
+    # The specific booking this review is linked to (ensures only one review per booking)
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='review')
     
-    # The user writing the review
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_written')
+    # The user who wrote the review
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_reviews')
     
-    # The service provider receiving the review
-    provider = models.ForeignKey(ServiceProvider, on_delete=models.CASCADE, related_name='reviews_received')
+    # The service provider being reviewed
+    provider = models.ForeignKey(ServiceProvider, on_delete=models.CASCADE, related_name='received_reviews')
     
-    # The numerical score given by the user
+    # The rating given by the user, from 1 to 5
     rating = models.IntegerField(choices=RATING_CHOICES)
     
-    # The written feedback text
+    # The written feedback from the user
     comment = models.TextField()
     
-    # Automatically records when the review was posted
+    # Automatically set to the exact date and time the review was submitted
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review for {self.provider.user.username} - Rating: {self.rating}"
+        return f"Review by {self.reviewer.username} for {self.provider.user.username} - {self.rating} Stars"
