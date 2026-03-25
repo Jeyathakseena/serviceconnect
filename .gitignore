@@ -1,0 +1,12 @@
+# Manually uploaded media (Provider photos)
+media/
+
+# Database (Keep your local data local)
+db.sqlite3
+
+# Python Bytecode (Messy background files)
+__pycache__/
+*.py[cod]
+
+# Environment variables (Security!)
+.env
