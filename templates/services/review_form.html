@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review {{ booking.provider.user.get_full_name }} | ServiceConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg p-4 p-md-5 rounded-4 text-center">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light mb-3" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-pen-to-square fs-1 text-primary"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1">Leave a Review</h2>
+                    <p class="text-muted">For: <span class="fw-bold text-dark">{{ booking.provider.user.get_full_name }}</span></p>
+                </div>
+
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label d-block fw-bold text-secondary small text-uppercase mb-3">Your Rating</label>
+                        <div id="star-rating" class="fs-1 mb-2">
+                            <i class="fa-solid fa-star star-btn cursor-pointer" data-value="1"></i>
+                            <i class="fa-solid fa-star star-btn cursor-pointer" data-value="2"></i>
+                            <i class="fa-solid fa-star star-btn cursor-pointer" data-value="3"></i>
+                            <i class="fa-solid fa-star star-btn cursor-pointer" data-value="4"></i>
+                            <i class="fa-solid fa-star star-btn cursor-pointer" data-value="5"></i>
+                        </div>
+                        <p id="rating-text" class="fw-bold text-primary mb-0">Select a rating</p>
+                        <input type="hidden" name="rating" id="id_rating" value="0" required>
+                    </div>
+
+                    <div class="mb-4 text-start">
+                        <label for="comment" class="form-label fw-bold text-secondary small text-uppercase">Your Feedback</label>
+                        <textarea name="comment" id="comment" rows="4" class="form-control bg-light p-3 border-0" 
+                                  placeholder="Tell others about your experience..." required></textarea>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <button type="submit" id="submit-btn" class="btn btn-warning btn-lg py-3 fw-bold text-white shadow-sm" disabled style="background: linear-gradient(135deg, #F59E0B, #D97706); border: none;">
+                            Submit Review <i class="fa-solid fa-paper-plane ms-2"></i>
+                        </button>
+                        <a href="{% url 'my_bookings' %}" class="btn btn-link text-muted text-decoration-none small">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Back to My Bookings
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stars = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('id_rating');
+        const ratingText = document.getElementById('rating-text');
+        const submitBtn = document.getElementById('submit-btn');
+
+        const labels = {
+            1: "1 star — Poor",
+            2: "2 stars — Fair",
+            3: "3 stars — Good",
+            4: "4 stars — Very Good",
+            5: "5 stars — Excellent"
+        };
+
+        stars.forEach(star => {
+            // Hover effect (optional enhancement)
+            star.addEventListener('mouseover', function() {
+                highlightStars(this.dataset.value);
+            });
+
+            // Reset to current selected value on mouse out
+            star.addEventListener('mouseout', function() {
+                highlightStars(ratingInput.value);
+            });
+
+            // Click to select
+            star.addEventListener('click', function() {
+                const val = this.dataset.value;
+                ratingInput.value = val;
+                ratingText.innerText = labels[val];
+                submitBtn.disabled = false; // Enable submit once a rating is picked
+                highlightStars(val);
+            });
+        });
+
+        function highlightStars(count) {
+            stars.forEach(s => {
+                if (s.dataset.value <= count) {
+                    s.style.color = "#F59E0B"; // Gold
+                } else {
+                    s.style.color = "#E5E7EB"; // Grey
+                }
+            });
+        }
+
+        // Initialize stars as grey
+        highlightStars(0);
+    });
+</script>
+
+<style>
+    .cursor-pointer { cursor: pointer; transition: transform 0.1s ease; }
+    .cursor-pointer:hover { transform: scale(1.2); }
+    .star-btn { color: #E5E7EB; margin: 0 5px; }
+</style>
+{% endblock %}

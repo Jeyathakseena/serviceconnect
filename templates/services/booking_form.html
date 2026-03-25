@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book {{ provider.user.get_full_name }} | ServiceConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-2">
+    <div class="mb-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'provider_profile' provider.id %}" class="text-decoration-none">Provider Profile</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Booking</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold">Schedule Your Service</h2>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px; border-radius: 20px;">
+                <div class="text-center mb-4">
+                    {% if provider.profile_picture %}
+                        <img src="{{ provider.profile_picture.url }}" class="rounded-circle shadow-sm border border-3 border-white" 
+                             style="width: 120px; height: 120px; object-fit: cover;" alt="{{ provider.user.get_full_name }}">
+                    {% else %}
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white mx-auto shadow-sm" 
+                             style="width: 120px; height: 120px; font-size: 2.5rem; font-weight: 700;">
+                            {{ provider.user.first_name|first }}{{ provider.user.last_name|first }}
+                        </div>
+                    {% endif %}
+                    <h4 class="fw-bold mt-3 mb-1">{{ provider.user.get_full_name }}</h4>
+                    <span class="badge status-confirmed px-3 py-2">{{ provider.get_service_category_display }}</span>
+                </div>
+
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="fa-solid fa-location-dot me-2"></i>Location</span>
+                        <span class="fw-semibold small">{{ provider.location }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small"><i class="fa-solid fa-clock me-2"></i>Rate</span>
+                        <span class="text-success fw-bold">₹{{ provider.hourly_rate }}/hr</span>
+                    </div>
+                    <p class="text-muted small mb-0 lh-sm">
+                        <strong>Bio:</strong> {{ provider.bio|truncatewords:30 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg p-4 p-md-5" style="border-radius: 25px;">
+                <h3 class="fw-bold mb-4">Book {{ provider.user.get_full_name }}</h3>
+                
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="service_date" class="form-label fw-bold text-secondary small text-uppercase">Service Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-calendar text-primary"></i></span>
+                                <input type="date" name="service_date" id="service_date" class="form-control form-control-lg bg-light border-start-0" required>
+                            </div>
+                            <div class="form-text small text-muted">Select when you need the service.</div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label for="service_time" class="form-label fw-bold text-secondary small text-uppercase">Preferred Time</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-clock text-primary"></i></span>
+                                <input type="time" name="service_time" id="service_time" class="form-control form-control-lg bg-light border-start-0" required>
+                            </div>
+                            <div class="form-text small text-muted">What time works best for you?</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-bold text-secondary small text-uppercase">Describe what you need</label>
+                        <textarea name="description" id="description" rows="5" class="form-control bg-light p-3" 
+                                  placeholder="E.g., I have a leaky pipe under the kitchen sink that needs fixing immediately..." required></textarea>
+                    </div>
+
+                    <div class="p-3 mb-4 rounded-3 border-start border-primary border-4" style="background-color: #f0f7ff;">
+                        <p class="mb-0 small text-muted">
+                            <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                            Your request will be sent to the provider. They will review it and confirm their availability.
+                        </p>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary-custom btn-lg py-3 fw-bold fs-5 shadow">
+                            Confirm Booking <i class="fa-solid fa-paper-plane ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple JS to prevent booking in the past
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('service_date');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+    });
+</script>
+{% endblock %}

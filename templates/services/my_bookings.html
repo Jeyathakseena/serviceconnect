@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings | ServiceConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-2">
+    <div class="d-flex align-items-center justify-content-between mb-5">
+        <h2 class="fw-bold mb-0">My Bookings</h2>
+        <a href="{% url 'home' %}" class="btn btn-primary-custom px-4">Find a Service</a>
+    </div>
+
+    <div class="row g-4">
+        {% for booking in bookings %}
+        <div class="col-12">
+            <div class="card booking-card border-0 shadow-sm rounded-4">
+                <div>
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="fa-solid fa-user text-secondary opacity-50"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">{{ booking.provider.user.get_full_name }}</h5>
+                            <span class="text-primary small fw-semibold">{{ booking.provider.get_service_category_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-start-md px-md-4">
+                    <span class="fw-bold d-block">{{ booking.service_date|date:"M d, Y" }}</span>
+                    <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i>{{ booking.service_time|time:"h:i A" }}</span>
+                </div>
+
+                <div class="border-start-md px-md-4">
+                    <strong class="text-dark small d-block mb-1">Your Request:</strong>
+                    <p class="text-secondary small mb-0">{{ booking.description|truncatechars:60 }}</p>
+                </div>
+
+                <div class="text-md-end">
+                    <div class="mb-2">
+                        {% if booking.status == 'pending' %}
+                            <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+                        {% elif booking.status == 'confirmed' %}
+                            <span class="badge bg-primary px-3 py-2">Confirmed</span>
+                        {% elif booking.status == 'completed' %}
+                            <span class="badge bg-success px-3 py-2">Completed ✓</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-2">Cancelled</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {% if booking.status == 'completed' and not booking.review_set.exists %}
+                            <a href="{% url 'submit_review' booking.id %}" class="btn btn-sm btn-primary-custom">Leave a Review</a>
+                        {% endif %}
+                        <a href="{% url 'provider_profile' booking.provider.id %}" class="btn btn-outline-secondary btn-sm rounded-pill">View Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+/* ==========================================================================
+   ServiceConnect Global Styles - DARK & GOLD THEME
+   ========================================================================== */
+
+:root {
+    --primary-dark: #0f172a;    /* Deep Slate/Black */
+    --primary-blue: #1E3A5F;   
+    --accent: #FFD700;         /* Gold */
+    --accent-hover: #f59e0b;   
+    --success: #10b981;
+    --warning: #f59e0b;
+    --grey-light: #f8fafc;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--grey-light);
+    color: #334155;
+}
+
+/* NAVBAR DARK THEME */
+.navbar { 
+    background-color: var(--primary-dark) !important; 
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.navbar-brand, .nav-link { 
+    color: white !important; 
+}
+.nav-link:hover { 
+    color: var(--accent) !important; 
+}
+
+/* THE FIX FOR CRAMPED BOOKINGS */
+.booking-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    position: relative;
+    padding: 30px !important;
+}
+
+@media (min-width: 768px) {
+    .booking-card {
+        grid-template-columns: 2fr 2fr 3fr 2fr;
+        align-items: center;
+    }
+}
+
+/* Moving the badge so it doesn't overlap buttons */
+.booking-status-container {
+    margin-bottom: 15px;
+}
+
+/* Primary Button - Gold Theme */
+.btn-primary-custom {
+    background: var(--accent);
+    color: var(--primary-dark) !important;
+    border: none;
+    border-radius: 50rem;
+    padding: 10px 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+/* Category Icons */
+.category-card i {
+    color: var(--accent);
+}

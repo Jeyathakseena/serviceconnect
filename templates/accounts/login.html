@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login | ServiceConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5">
+            
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                
+                <div class="card-header border-0 text-center py-4" style="background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%);">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle mb-3 shadow" style="width: 60px; height: 60px;">
+                        <i class="fa-solid fa-wrench fs-3 text-primary"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-0">Welcome Back</h3>
+                    <p class="text-white-50 mb-0">Log in to your ServiceConnect account</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-white">
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger rounded-3 text-sm shadow-sm border-0" role="alert">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i>
+                            Your username and password didn't match. Please try again.
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="username" class="form-label fw-semibold text-secondary small text-uppercase">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <input type="text" name="username" id="username" class="form-control form-control-lg bg-light border-start-0" placeholder="Enter your username" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-semibold text-secondary small text-uppercase">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                                <input type="password" name="password" id="password" class="form-control form-control-lg bg-light border-start-0" placeholder="Enter your password" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary-custom btn-lg w-100 py-3 fs-5">
+                                Login <i class="fa-solid fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="position-relative text-center my-4">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">OR</span>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="mb-2">
+                            Don't have an account? 
+                            <a href="{% url 'register' %}" class="text-decoration-none fw-semibold" style="color: #2563EB;">Sign Up</a>
+                        </p>
+                        <p class="mb-0 small">
+                            Are you a service provider? 
+                            <a href="{% url 'register_provider' %}" class="text-decoration-none fw-semibold text-success">Register here</a>
+                        </p>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

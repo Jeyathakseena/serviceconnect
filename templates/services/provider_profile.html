@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ provider.user.get_full_name }} | ServiceConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-2">
+    <div class="card border-0 shadow-sm mb-5" style="border-radius: 20px; overflow: hidden;">
+        <div class="row g-0">
+            <div class="col-md-4 bg-light d-flex align-items-center justify-content-center p-4" style="min-height: 300px;">
+                {% if provider.profile_picture %}
+                    <img src="{{ provider.profile_picture.url }}" class="img-fluid rounded-4 shadow-sm" 
+                         style="width: 100%; max-width: 280px; aspect-ratio: 1/1; object-fit: cover;" 
+                         alt="{{ provider.user.get_full_name }}">
+                {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm" 
+                         style="width: 180px; height: 180px; background: linear-gradient(135deg, #2563EB, #1E3A5F); font-size: 4rem; font-weight: 700;">
+                        {{ provider.user.first_name|first }}{{ provider.user.last_name|first }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-8 p-4 p-lg-5 d-flex flex-column">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge status-confirmed px-3 py-2 fs-6">{{ provider.get_service_category_display }}</span>
+                    {% if provider.recommendation_score >= 3.5 %}
+                        <span class="badge-gold px-3 py-2">
+                            <i class="fa-solid fa-award me-1"></i> Top Recommended
+                        </span>
+                    {% endif %}
+                </div>
+
+                <h1 class="display-5 fw-bold text-dark mb-1">{{ provider.user.get_full_name }}</h1>
+                <p class="text-muted fs-5 mb-3">
+                    <i class="fa-solid fa-location-dot text-primary me-2"></i>{{ provider.location }}
+                </p>
+
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-2 fs-4 text-warning">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= avg_rating %}
+                                <i class="fa-solid fa-star"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star text-secondary opacity-25"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="fw-bold fs-5 ms-1">{{ avg_rating }}</span>
+                    <span class="text-muted ms-2">({{ reviews|length }} Reviews)</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-sm-4">
+                        <div class="p-3 bg-light rounded-3 text-center">
+                            <small class="text-uppercase fw-bold text-muted d-block mb-1">Experience</small>
+                            <span class="fs-5 fw-bold">{{ provider.experience_years }} Years</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <div class="p-3 bg-light rounded-3 text-center">
+                            <small class="text-uppercase fw-bold text-muted d-block mb-1">Hourly Rate</small>
+                            <span class="fs-5 fw-bold text-success">₹{{ provider.hourly_rate }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-3">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'create_booking' provider.id %}" class="btn btn-primary-custom btn-lg px-5 py-3 shadow">
+                            <i class="fa-solid fa-calendar-check me-2"></i>Book Now
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-secondary rounded-pill btn-lg px-5 py-3 shadow-sm">
+                            <i class="fa-solid fa-lock me-2"></i>Login to Book
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-lg-7">
+            <h3 class="fw-bold mb-4">About the Professional</h3>
+            <div class="bg-white p-4 rounded-4 shadow-sm border mb-5">
+                <p class="fs-5 text-secondary lh-lg mb-4" style="white-space: pre-line;">
+                    {{ provider.bio }}
+                </p>
+
+                <hr class="my-4 opacity-25">
+
+                <h5 class="fw-bold mb-3">AI Recommendation Score</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="flex-grow-1">
+                        <div class="progress" style="height: 12px; border-radius: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                 style="width: {% widthratio provider.recommendation_score 5 100 %}%" 
+                                 aria-valuenow="{{ provider.recommendation_score }}" aria-valuemin="0" aria-valuemax="5"></div>
+                        </div>
+                    </div>
+                    <span class="fw-bold fs-4 text-primary">{{ provider.recommendation_score }}<small class="text-muted fs-6">/5</small></span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h3 class="fw-bold mb-0">Customer Reviews <span class="text-muted">({{ reviews|length }})</span></h3>
+            </div>
+
+            {% for review in reviews %}
+                <div class="card border-0 shadow-sm mb-3 p-4 rounded-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold mb-1">{{ review.reviewer.get_full_name|default:review.reviewer.username }}</h6>
+                            <div class="text-warning small mb-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                        <i class="fa-regular fa-star text-secondary opacity-25"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="text-secondary mb-0">"{{ review.comment }}"</p>
+                </div>
+            {% empty %}
+                <div class="text-center py-5 bg-white rounded-4 border border-dashed">
+                    <i class="fa-regular fa-comments fa-3x text-muted opacity-25 mb-3"></i>
+                    <h5 class="text-muted">No reviews yet. Be the first to hire {{ provider.user.first_name }}!</h5>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm p-4 rounded-4 sticky-top" style="top: 100px; background-color: #f8fafc;">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-shield-check text-success me-2"></i>Service Guarantee</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="fa-solid fa-check text-success mt-1 me-2"></i>
+                        <span><strong>Verified Professionals:</strong> All providers go through a background check.</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="fa-solid fa-check text-success mt-1 me-2"></i>
+                        <span><strong>Transparent Pricing:</strong> No hidden fees. You pay the rate shown.</span>
+                    </li>
+                    <li class="d-flex align-items-start">
+                        <i class="fa-solid fa-check text-success mt-1 me-2"></i>
+                        <span><strong>Secure Booking:</strong> Your data is protected by ServiceConnect.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
