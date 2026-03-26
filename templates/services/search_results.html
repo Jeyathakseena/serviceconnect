@@ -4,10 +4,23 @@
 {% block title %}Search Results | ServiceConnect{% endblock %}
 
 {% block content %}
+<style>
+    /* Image Fix Styling */
+    .provider-profile-pic {
+        width: 120px; height: 120px; object-fit: cover;
+        border-radius: 50%; border: 3px solid #f8f9fa;
+        display: block; margin: 0 auto 15px;
+    }
+    .placeholder-avatar {
+        background: #f1f4f8; color: #adb5bd;
+        display: flex; align-items: center; justify-content: center;
+    }
+</style>
+
 <section class="py-4 shadow-sm mb-5" style="background-color: #1E3A5F;">
     <div class="container">
         <form action="{% url 'search' %}" method="GET" class="row g-3 align-items-center">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label text-white-50 small fw-bold mb-1">Service Category</label>
                 <select name="category" class="form-select border-0 shadow-sm py-2">
                     <option value="">All Categories</option>
@@ -16,89 +29,59 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-3">
+                <label class="form-label text-white-50 small fw-bold mb-1">Sort & Filter</label>
+                <select name="filter_by" class="form-select border-0 shadow-sm py-2">
+                    <option value="">Filter</option>
+                    <option value="nearby" {% if filter_by == "nearby" %}selected{% endif %}>Nearby</option>
+                    <option value="top_rated" {% if filter_by == "top_rated" %}selected{% endif %}>Top Rated</option>
+                    <option value="nearby_top_rated" {% if filter_by == "nearby_top_rated" %}selected{% endif %}>📍⭐ Nearby + Top Rated</option>
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label class="form-label text-white-50 small fw-bold mb-1">Location</label>
-                <div class="input-group">
-                    <span class="input-group-text border-0 bg-white"><i class="fa-solid fa-location-dot text-primary"></i></span>
-                    <input type="text" name="location" class="form-control border-0 shadow-sm py-2" 
-                           placeholder="City or area..." value="{{ location }}">
+                <div class="location-wrapper">
+                    <div class="input-group">
+                        <span class="input-group-text border-0 bg-white"><i class="fa-solid fa-location-dot text-primary"></i></span>
+                        <input type="text" name="location" id="locationInput" class="form-control border-0 shadow-sm py-2" placeholder="City or area..." value="{{ location }}" autocomplete="off">
+                        <span id="locationBadge" class="location-badge">📍 Detected</span>
+                    </div>
+                    <input type="hidden" name="user_lat" id="userLat" value="{{ user_lat }}">
+                    <input type="hidden" name="user_lng" id="userLng" value="{{ user_lng }}">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label d-none d-md-block mb-1">&nbsp;</label>
-                <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold">
-                    <i class="fa-solid fa-magnifying-glass me-2"></i>Update Results
-                </button>
+                <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold">Update</button>
             </div>
         </form>
     </div>
 </section>
 
 <div class="container mb-5">
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <h4 class="fw-bold mb-0">
-            {% if category or location %}
-                Results for "{{ category|capfirst }}" in "{{ location|default:'Everywhere' }}"
-            {% else %}
-                All Available Providers
-            {% endif %}
-        </h4>
-        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
-            <i class="fa-solid fa-users me-2 text-primary"></i>{{ providers|length }} provider(s) found
-        </span>
-    </div>
-
     <div class="row g-4">
         {% for provider in providers %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0 p-3 provider-card-clean position-relative">
-                {% if provider.recommendation_score >= 3.5 %}
-                    <span class="badge-gold position-absolute top-0 end-0 m-3" style="z-index: 2;">Top Recommended</span>
+                {% if provider.recommendation_score >= 3.5 %}<span class="badge-gold position-absolute top-0 end-0 m-3" style="z-index: 2;">Top Recommended</span>{% endif %}
+                
+                {% if provider.profile_picture %}
+                    <img src="{{ provider.profile_picture.url }}" class="provider-profile-pic" alt="{{ provider.user.get_full_name }}">
+                {% else %}
+                    <div class="provider-profile-pic placeholder-avatar mx-auto"><i class="fa-solid fa-user-tie fa-3x"></i></div>
                 {% endif %}
                 
-                <div class="text-center">
-                    {% if provider.profile_picture %}
-                        <img src="{{ provider.profile_picture.url }}" class="provider-profile-pic" alt="{{ provider.user.get_full_name }}">
-                    {% else %}
-                        <div class="provider-profile-pic bg-light d-flex align-items-center justify-content-center mx-auto">
-                            <i class="fa-solid fa-user-tie fa-3x text-secondary opacity-25"></i>
-                        </div>
-                    {% endif %}
-                </div>
-                
                 <h5 class="fw-bold mb-1 text-center">{{ provider.user.get_full_name }}</h5>
-                <div class="text-center mb-3">
-                    <span class="badge status-confirmed">{{ provider.get_service_category_display }}</span>
-                </div>
+                <div class="text-center mb-3"><span class="badge status-confirmed">{{ provider.get_service_category_display }}</span></div>
                 
-                <hr class="my-3 opacity-25">
-
-                <div class="w-100 text-start small mb-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted"><i class="fa-solid fa-map-marker-alt me-2"></i>Location</span>
-                        <span class="fw-medium">{{ provider.location }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted"><i class="fa-solid fa-award me-2"></i>Experience</span>
-                        <span class="fw-medium">{{ provider.experience_years }} Years</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted"><i class="fa-solid fa-tags me-2"></i>Hourly Rate</span>
-                        <span class="text-success fw-bold">₹{{ provider.hourly_rate }}/hr</span>
-                    </div>
+                <div class="w-100 text-start small mb-4 bg-light p-3 rounded">
+                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Location</span><span class="fw-medium">{{ provider.location }}</span></div>
+                    {% if provider.distance_km is not None %}<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="text-primary fw-bold">📍 {{ provider.distance_km }} km away</span></div>{% endif %}
+                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Experience</span><span class="fw-medium">{{ provider.experience_years }} Years</span></div>
+                    <div class="d-flex justify-content-between mb-0"><span class="text-muted">Hourly Rate</span><span class="text-success fw-bold">₹{{ provider.hourly_rate }}/hr</span></div>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-4">
-                    <span class="small fw-bold text-muted">Trust Score</span>
-                    <div class="d-flex align-items-center">
-                        <span class="fw-bold me-1 text-primary">{{ provider.recommendation_score }}</span>
-                        <i class="fa-solid fa-star star-filled small"></i>
-                    </div>
-                </div>
-
-                <a href="{% url 'provider_profile' provider.id %}" class="btn btn-outline-primary rounded-pill w-100 fw-semibold mt-auto">
-                    View Full Profile
-                </a>
+                <a href="{% url 'provider_profile' provider.id %}" class="btn btn-outline-primary rounded-pill w-100 fw-semibold mt-auto">View Full Profile</a>
             </div>
         </div>
         {% empty %}

@@ -1,3 +1,6 @@
+import json
+import urllib.request
+import urllib.parse
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib import messages
@@ -5,84 +8,92 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, ServiceProviderForm
 from .models import UserProfile, ServiceProvider
 
+def geocode_city(city_name):
+    """
+    Helper to convert city name to Lat/Lng using OSM Nominatim.
+    Returns (lat, lng) or (None, None) on failure.
+    """
+    try:
+        # Encode the city name for a URL (e.g., 'New York' -> 'New%20York')
+        encoded_city = urllib.parse.quote(city_name)
+        url = f"https://nominatim.openstreetmap.org/search?q={encoded_city}&format=json&limit=1"
+        
+        # Nominatim REQUIRES a User-Agent or it returns 403 Forbidden
+        headers = {'User-Agent': 'ServiceConnect/1.0'}
+        req = urllib.request.Request(url, headers=headers)
+        
+        # Call API with a 5-second timeout
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            
+            if data and len(data) > 0:
+                lat = float(data[0]['lat'])
+                lon = float(data[0]['lon'])
+                return lat, lon
+    except Exception as e:
+        # Silently catch errors (Network down, timeout, etc.) to prevent crash
+        print(f"Geocoding error: {e}")
+        
+    return None, None
+
 def register_user(request):
-    """
-    Handles registration for standard customers.
-    """
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            # Save the base User object
             user = form.save()
-            
-            # Extract the extra phone field and create the linked UserProfile
             phone = form.cleaned_data.get('phone')
             UserProfile.objects.create(user=user, phone=phone, is_provider=False)
-            
-            # Log the user in automatically
             login(request, user)
-            
-            # Send a success message to be displayed by base.html
             messages.success(request, f"Account created successfully! Welcome, {user.first_name}.")
             return redirect('home')
         else:
             messages.error(request, "Registration failed. Please correct the errors below.")
     else:
-        # If it's a GET request, just show the empty form
         form = UserRegisterForm()
-        
     return render(request, 'accounts/register.html', {'form': form})
 
-
 def register_provider(request):
-    """
-    Handles registration for service providers using two combined forms.
-    """
     if request.method == 'POST':
-        # Instantiate BOTH forms with the submitted POST data and FILES (for the image)
         user_form = UserRegisterForm(request.POST)
         provider_form = ServiceProviderForm(request.POST, request.FILES)
         
-        # Check if BOTH forms are valid before saving anything to the database
         if user_form.is_valid() and provider_form.is_valid():
-            
-            # 1. Save the base User object
             user = user_form.save()
-            
-            # 2. Extract the phone number and create the UserProfile (flagged as provider)
             phone = user_form.cleaned_data.get('phone')
             UserProfile.objects.create(user=user, phone=phone, is_provider=True)
             
-            # 3. Save the ServiceProvider profile, but don't commit to the database yet...
             provider = provider_form.save(commit=False)
-            # ...because we need to link it to the newly created user first!
             provider.user = user
-            provider.save() # Now save it to the database
             
-            # Log the provider in automatically
+            # --- GEOLOCATION LOGIC ---
+            city_name = provider_form.cleaned_data.get('location')
+            lat, lng = geocode_city(city_name)
+            provider.latitude = lat
+            provider.longitude = lng
+            provider.save() 
+
             login(request, user)
             
-            messages.success(request, f"Provider account created successfully! Welcome to the team, {user.first_name}.")
+            # Dynamic success message based on geocoding result
+            success_msg = f"Provider account created successfully! Welcome, {user.first_name}."
+            if lat:
+                success_msg += " Your location has been mapped successfully."
+            else:
+                success_msg += " Note: We could not detect your exact location. You can update it from your profile."
+            
+            messages.success(request, success_msg)
             return redirect('home')
         else:
             messages.error(request, "Registration failed. Please correct the errors below.")
     else:
-        # If it's a GET request, create empty versions of both forms
         user_form = UserRegisterForm()
         provider_form = ServiceProviderForm()
         
-    # Pass BOTH forms to the template
-    context = {
-        'user_form': user_form,
+    return render(request, 'accounts/register_provider.html', {
+        'user_form': user_form, 
         'provider_form': provider_form
-    }
-    return render(request, 'accounts/register_provider.html', context)
-
+    })
 
 @login_required
 def profile(request):
-    """
-    A simple view to show the logged-in user their own information.
-    The @login_required decorator strictly prevents non-logged-in users from seeing this.
-    """
     return render(request, 'accounts/profile.html')

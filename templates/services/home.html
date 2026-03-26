@@ -4,16 +4,44 @@
 {% block title %}ServiceConnect | Find Trusted Local Professionals{% endblock %}
 
 {% block content %}
+<style>
+    .location-wrapper { position: relative; width: 100%; }
+    .location-dropdown {
+        position: absolute; top: 110%; left: 0; right: 0;
+        background: white; border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none;
+        z-index: 1050; overflow: hidden; border: 1px solid #eee;
+    }
+    .location-option {
+        padding: 12px 20px; cursor: pointer; display: flex; align-items: center;
+        transition: background 0.2s; border-bottom: 1px solid #f8f9fa;
+    }
+    .location-option:last-child { border-bottom: none; }
+    .location-option:hover { background: #f0f7ff; }
+    .location-option i { width: 25px; color: #2563EB; margin-right: 12px; }
+    
+    /* Image Fix Styling */
+    .provider-profile-pic {
+        width: 100px; height: 100px; object-fit: cover;
+        border-radius: 50%; border: 3px solid #f8f9fa;
+        display: block; margin: 0 auto 15px;
+    }
+    .placeholder-avatar {
+        background: #eef2f7; color: #adb5bd;
+        display: flex; align-items: center; justify-content: center;
+    }
+</style>
+
 <section class="hero-section py-5 mb-5">
     <div class="container py-5">
         <div class="row justify-content-center text-center">
-            <div class="col-lg-9">
+            <div class="col-lg-10"> 
                 <h1 class="display-4 fw-bold mb-3">Find Trusted Service Professionals Near You</h1>
                 <p class="lead mb-5 opacity-75">Book top-rated plumbers, electricians, tutors, and more in seconds.</p>
                 
-                <div class="card p-3 shadow-lg border-0 mx-auto" style="border-radius: 50rem; max-width: 900px;">
+                <div class="card p-3 shadow-lg border-0 mx-auto" style="border-radius: 50rem; max-width: 1000px;">
                     <form action="{% url 'search' %}" method="GET" class="row g-2 align-items-center px-2">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="input-group">
                                 <span class="input-group-text bg-transparent border-0 text-primary"><i class="fa-solid fa-list"></i></span>
                                 <select name="category" class="form-select border-0 shadow-none">
@@ -24,18 +52,42 @@
                                 </select>
                             </div>
                         </div>
-                        
-                        <div class="col-md-5 border-start-md">
+
+                        <div class="col-md-3 border-start-md">
                             <div class="input-group">
-                                <span class="input-group-text bg-transparent border-0 text-primary"><i class="fa-solid fa-location-dot"></i></span>
-                                <input type="text" name="location" class="form-control border-0 shadow-none" placeholder="Enter your city or area...">
+                                <span class="input-group-text bg-transparent border-0 text-primary"><i class="fa-solid fa-gear"></i></span>
+                                <select name="filter_by" class="form-select border-0 shadow-none">
+                                    <option value="">Filter</option>
+                                    <option value="nearby">Nearby</option>
+                                    <option value="top_rated">Top Rated</option>
+                                    <option value="nearby_top_rated">Nearby + Top Rated</option>
+                                </select>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary-custom w-100 py-2 fs-5">
-                                <i class="fa-solid fa-magnifying-glass me-2"></i>Search
-                            </button>
+                        <div class="col-md-4 border-start-md">
+                            <div class="location-wrapper">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-0 text-primary"><i class="fa-solid fa-location-dot"></i></span>
+                                    <input type="text" name="location" id="locationInput" class="form-control border-0 shadow-none px-0" placeholder="City or area..." autocomplete="off">
+                                    <span id="locationBadge" class="location-badge">📍 Detected</span>
+                                </div>
+                                <div id="locationDropdown" class="location-dropdown text-start">
+                                    <div class="location-option" id="useCurrentLocation">
+                                        <i class="fa-solid fa-crosshairs"></i>
+                                        <div><div class="fw-bold">Use My Current Location</div><small class="text-muted">Best for finding nearby help</small></div>
+                                    </div>
+                                    <div class="location-option" id="enterManually">
+                                        <i class="fa-solid fa-keyboard"></i>
+                                        <div><div class="fw-bold">Enter Manually</div><small class="text-muted">Search by city or area name</small></div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="user_lat" id="userLat"><input type="hidden" name="user_lng" id="userLng">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary-custom w-100 py-2 fs-5">Search</button>
                         </div>
                     </form>
                 </div>
@@ -53,137 +105,95 @@
         <div class="col-6 col-md-3 col-lg-2">
             <a href="{% url 'search' %}?category=plumber" class="text-decoration-none text-dark">
                 <div class="card category-card h-100 shadow-sm border-0">
-                    <i class="fa-solid fa-wrench"></i>
-                    <h6 class="fw-bold mb-0">Plumber</h6>
+                    <i class="fa-solid fa-wrench"></i><h6 class="fw-bold mb-0">Plumber</h6>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
             <a href="{% url 'search' %}?category=electrician" class="text-decoration-none text-dark">
                 <div class="card category-card h-100 shadow-sm border-0">
-                    <i class="fa-solid fa-bolt"></i>
-                    <h6 class="fw-bold mb-0">Electrician</h6>
+                    <i class="fa-solid fa-bolt"></i><h6 class="fw-bold mb-0">Electrician</h6>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
             <a href="{% url 'search' %}?category=cleaner" class="text-decoration-none text-dark">
                 <div class="card category-card h-100 shadow-sm border-0">
-                    <i class="fa-solid fa-broom"></i>
-                    <h6 class="fw-bold mb-0">Cleaner</h6>
+                    <i class="fa-solid fa-broom"></i><h6 class="fw-bold mb-0">Cleaner</h6>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
             <a href="{% url 'search' %}?category=tutor" class="text-decoration-none text-dark">
                 <div class="card category-card h-100 shadow-sm border-0">
-                    <i class="fa-solid fa-book"></i>
-                    <h6 class="fw-bold mb-0">Tutor</h6>
+                    <i class="fa-solid fa-book"></i><h6 class="fw-bold mb-0">Tutor</h6>
                 </div>
             </a>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
             <a href="{% url 'search' %}?category=carpenter" class="text-decoration-none text-dark">
                 <div class="card category-card h-100 shadow-sm border-0">
-                    <i class="fa-solid fa-hammer"></i>
-                    <h6 class="fw-bold mb-0">Carpenter</h6>
+                    <i class="fa-solid fa-hammer"></i><h6 class="fw-bold mb-0">Carpenter</h6>
                 </div>
             </a>
         </div>
     </div>
 </section>
 
-<hr class="container my-5 opacity-25">
+<section class="bg-white py-5 mb-5">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="mb-3"><div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 70px; height: 70px;"><i class="fa-solid fa-magnifying-glass fs-3 text-primary"></i></div></div>
+                <h5 class="fw-bold">Search</h5>
+                <p class="text-muted px-3">Filter by category and location to find the perfect professional.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3"><div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 70px; height: 70px;"><i class="fa-solid fa-calendar-check fs-3 text-primary"></i></div></div>
+                <h5 class="fw-bold">Book</h5>
+                <p class="text-muted px-3">Select a date and time and book instantly without any hassle.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3"><div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 70px; height: 70px;"><i class="fa-solid fa-circle-check fs-3 text-primary"></i></div></div>
+                <h5 class="fw-bold">Get Service</h5>
+                <p class="text-muted px-3">Relax as your trusted professional completes the work.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 <section class="container mb-5">
     <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h2 class="fw-bold mb-1">AI Recommended Providers</h2>
-            <p class="text-muted mb-0">Ranked by our smart algorithm</p>
-        </div>
-        <a href="{% url 'search' %}" class="text-primary fw-semibold text-decoration-none">View All <i class="fa-solid fa-arrow-right small"></i></a>
+        <div><h2 class="fw-bold mb-1">AI Recommended Providers</h2><p class="text-muted mb-0">Ranked by our smart algorithm</p></div>
+        <a href="{% url 'search' %}" class="text-primary fw-semibold text-decoration-none">View All →</a>
     </div>
 
     <div class="row g-4">
         {% for provider in top_providers %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0 p-3 provider-card-clean">
-                {% if provider.recommendation_score >= 3.5 %}
-                    <span class="badge-gold position-absolute top-0 end-0 m-3">Top Recommended</span>
+                {% if provider.recommendation_score >= 3.5 %}<span class="badge-gold position-absolute top-0 end-0 m-3">Top Recommended</span>{% endif %}
+                
+                {% if provider.profile_picture %}
+                    <img src="{{ provider.profile_picture.url }}" class="provider-profile-pic" alt="{{ provider.user.get_full_name }}">
+                {% else %}
+                    <div class="provider-profile-pic placeholder-avatar"><i class="fa-solid fa-user-tie fa-2x"></i></div>
                 {% endif %}
                 
-                <img src="{% if provider.profile_picture %}{{ provider.profile_picture.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
-                     class="provider-profile-pic" alt="{{ provider.user.get_full_name }}">
-                
-                <h5 class="fw-bold mb-1">{{ provider.user.get_full_name }}</h5>
-                <span class="badge status-confirmed mb-3">{{ provider.get_service_category_display }}</span>
+                <h5 class="fw-bold mb-1 text-center">{{ provider.user.get_full_name }}</h5>
+                <div class="text-center"><span class="badge status-confirmed mb-3">{{ provider.get_service_category_display }}</span></div>
                 
                 <div class="w-100 text-start small mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted"><i class="fa-solid fa-location-dot me-2"></i>Location:</span>
-                        <span class="fw-medium">{{ provider.location }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted"><i class="fa-solid fa-briefcase me-2"></i>Experience:</span>
-                        <span class="fw-medium">{{ provider.experience_years }} Years</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted"><i class="fa-solid fa-clock me-2"></i>Hourly Rate:</span>
-                        <span class="text-success fw-bold">₹{{ provider.hourly_rate }}/hr</span>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center mb-3">
-                    <span class="text-muted small me-2">Score:</span>
-                    <span class="fw-bold text-dark">{{ provider.recommendation_score }}/5</span>
-                    <div class="ms-2">
-                        <i class="fa-solid fa-star star-filled small"></i>
-                    </div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">Location:</span><span class="fw-medium">{{ provider.location }}</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">Experience:</span><span class="fw-medium">{{ provider.experience_years }} Years</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">Hourly Rate:</span><span class="fw-bold text-success">₹{{ provider.hourly_rate }}/hr</span></div>
                 </div>
 
                 <a href="{% url 'provider_profile' provider.id %}" class="btn btn-outline-primary rounded-pill w-100 fw-semibold mt-auto">View Profile</a>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <p class="text-muted">No providers yet. Be the first to join!</p>
-        </div>
         {% endfor %}
-    </div>
-</section>
-
-<section class="bg-white py-5">
-    <div class="container py-4 text-center">
-        <h2 class="fw-bold mb-5">How It Works</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light shadow-sm" style="width: 80px; height: 80px;">
-                        <i class="fa-solid fa-magnifying-glass fs-2 text-primary"></i>
-                    </div>
-                </div>
-                <h5 class="fw-bold">Search</h5>
-                <p class="text-muted px-lg-4">Filter by category and location to find the perfect professional for your task.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light shadow-sm" style="width: 80px; height: 80px;">
-                        <i class="fa-solid fa-calendar-check fs-2 text-primary"></i>
-                    </div>
-                </div>
-                <h5 class="fw-bold">Book</h5>
-                <p class="text-muted px-lg-4">Select a convenient date and time and book instantly without any hassle.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light shadow-sm" style="width: 80px; height: 80px;">
-                        <i class="fa-solid fa-check-double fs-2 text-primary"></i>
-                    </div>
-                </div>
-                <h5 class="fw-bold">Get Service</h5>
-                <p class="text-muted px-lg-4">Relax as your trusted professional completes the work to your satisfaction.</p>
-            </div>
-        </div>
     </div>
 </section>
 {% endblock %}

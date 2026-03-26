@@ -75,3 +75,32 @@ body {
 .category-card i {
     color: var(--accent);
 }
+
+/* The Search Bar Location Badge */
+.location-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.location-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    background: #dcfce7; /* Light Green */
+    color: #166534;     /* Dark Green Text */
+    border-radius: 6px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;      /* Hidden by default, shown by JS */
+    white-space: nowrap;
+    z-index: 5;
+    border: 1px solid #bbf7d0;
+}
+
+/* Ensure the input text doesn't overlap the badge */
+#locationInput {
+    padding-right: 85px !important; 
+}

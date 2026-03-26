@@ -1,10 +1,22 @@
+import math
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Avg
 from accounts.models import ServiceProvider
 from .models import Review, Booking
-from .utils import update_all_scores  # Importing our scoring engine
+from .utils import update_all_scores 
+
+# Helper: Haversine distance formula
+def haversine(lat1, lon1, lat2, lon2):
+    """Calculates distance in KM between two GPS points."""
+    R = 6371
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+    return R * 2 * math.asin(math.sqrt(a))
 
 # ==========================================
 # DISCOVERY & SEARCH VIEWS
@@ -21,22 +33,62 @@ def homepage(request):
     return render(request, 'services/home.html', context)
 
 def search_providers(request):
-    """Filters providers by category and location."""
+    """Advanced search with Nearby and Rating filters."""
     category_query = request.GET.get('category', '')
     location_query = request.GET.get('location', '')
+    filter_by = request.GET.get('filter_by', '')
+    
+    # Persistent GPS data from Smart Location Picker
+    user_lat = request.GET.get('user_lat')
+    user_lng = request.GET.get('user_lng')
+
     providers = ServiceProvider.objects.all()
 
+    # 1. Standard QuerySet filters
     if category_query:
         providers = providers.filter(service_category=category_query)
-    if location_query:
+    
+    # FIX: Only apply text location filter if coordinates ARE NOT present
+    if location_query and not (user_lat and user_lng):
         providers = providers.filter(location__icontains=location_query)
 
-    providers = providers.order_by('-recommendation_score')
+    # 2. Advanced Annotation (Using 'received_reviews')
+    if "top_rated" in filter_by:
+        providers = providers.annotate(avg_rating=Avg('received_reviews__rating'))
+
+    # Convert to list for in-memory distance calculation and custom sorting
+    providers_list = list(providers)
+
+    if "nearby" in filter_by:
+        if user_lat and user_lng:
+            try:
+                u_lat, u_lng = float(user_lat), float(user_lng)
+                for p in providers_list:
+                    if p.latitude is not None and p.longitude is not None:
+                        p.distance_km = round(haversine(u_lat, u_lng, p.latitude, p.longitude), 1)
+                    else:
+                        p.distance_km = None
+                
+                # Sort: Distance primarily, Rating secondarily
+                if filter_by == "nearby_top_rated":
+                    providers_list.sort(key=lambda x: (x.distance_km is None, x.distance_km, -(x.avg_rating or 0)))
+                else:
+                    providers_list.sort(key=lambda x: (x.distance_km is None, x.distance_km))
+            except (ValueError, TypeError):
+                pass
+    elif filter_by == "top_rated":
+        providers_list.sort(key=lambda x: (getattr(x, 'avg_rating', None) is None, -(getattr(x, 'avg_rating', 0) or 0)))
+    else:
+        # Default fallback: Sort by the system recommendation score
+        providers_list.sort(key=lambda x: -x.recommendation_score)
 
     context = {
-        'providers': providers,
+        'providers': providers_list,
         'category': category_query,
         'location': location_query,
+        'filter_by': filter_by,
+        'user_lat': user_lat,
+        'user_lng': user_lng,
         'SERVICE_CATEGORIES': ServiceProvider.SERVICE_CATEGORIES,
     }
     return render(request, 'services/search_results.html', context)
@@ -116,7 +168,6 @@ def update_booking_status(request, booking_id, new_status):
         messages.info(request, f"Status updated to {new_status}.")
     return redirect('provider_dashboard')
 
-
 # ==========================================
 # REVIEW & FEEDBACK VIEWS
 # ==========================================
@@ -124,11 +175,9 @@ def update_booking_status(request, booking_id, new_status):
 @login_required
 def submit_review(request, booking_id):
     """Allows a customer to rate a provider after a service is completed."""
-    # Safety: Ensure the booking belongs to the logged-in user
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     
     if request.method == 'POST':
-        # Create the review
         Review.objects.create(
             booking=booking,
             reviewer=request.user,
@@ -136,10 +185,7 @@ def submit_review(request, booking_id):
             rating=int(request.POST.get('rating')),
             comment=request.POST.get('comment')
         )
-        
-        # Trigger the recommendation engine to update rankings
         update_all_scores()
-        
         messages.success(request, 'Review submitted! Thank you for your feedback.')
         return redirect('my_bookings')
         
