@@ -72,7 +72,12 @@
                 {% endif %}
                 
                 <h5 class="fw-bold mb-1 text-center">{{ provider.user.get_full_name }}</h5>
-                <div class="text-center mb-3"><span class="badge status-confirmed">{{ provider.get_service_category_display }}</span></div>
+                
+                <div class="text-center mb-3">
+                    <span class="badge bg-primary text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem;">
+                        {{ provider.service_category|title }}
+                    </span>
+                </div>
                 
                 <div class="w-100 text-start small mb-4 bg-light p-3 rounded">
                     <div class="d-flex justify-content-between mb-2"><span class="text-muted">Location</span><span class="fw-medium">{{ provider.location }}</span></div>

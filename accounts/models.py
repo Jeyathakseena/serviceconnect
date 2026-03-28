@@ -19,21 +19,12 @@ class ServiceProvider(models.Model):
     """
     Stores specific professional details for users who register as service providers.
     """
-    SERVICE_CATEGORIES = [
-        ('plumber', 'Plumber'),
-        ('electrician', 'Electrician'),
-        ('cleaner', 'Cleaner'),
-        ('tutor', 'Tutor'),
-        ('carpenter', 'Carpenter'),
-        ('painter', 'Painter'),
-        ('mechanic', 'Mechanic'),
-    ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='provider_profile')
-    service_category = models.CharField(max_length=50, choices=SERVICE_CATEGORIES)
+    
+    # CHANGED: Removed choices to allow infinite custom skills
+    service_category = models.CharField(max_length=100) 
     location = models.CharField(max_length=100)
     
-    # NEW: Geolocation for Provider's base of operations
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     
@@ -45,4 +36,4 @@ class ServiceProvider(models.Model):
     recommendation_score = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
 
     def __str__(self):
-        return f"{self.user.username} - {self.get_service_category_display()}"
+        return f"{self.user.username} - {self.service_category.title()}"

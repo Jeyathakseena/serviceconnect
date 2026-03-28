@@ -8,9 +8,7 @@ from accounts.models import ServiceProvider
 from .models import Review, Booking
 from .utils import update_all_scores 
 
-# Helper: Haversine distance formula
 def haversine(lat1, lon1, lat2, lon2):
-    """Calculates distance in KM between two GPS points."""
     R = 6371
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
@@ -18,45 +16,47 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
     return R * 2 * math.asin(math.sqrt(a))
 
+# NEW: Helper function to get all skills for search dropdowns dynamically
+def get_dynamic_categories():
+    try:
+        db_cats = ServiceProvider.objects.exclude(service_category='').values_list('service_category', flat=True).distinct()
+    except Exception:
+        db_cats = []
+    default_cats = ['plumber', 'electrician', 'cleaner', 'tutor', 'carpenter', 'painter', 'mechanic']
+    all_cats = sorted(list(set(default_cats) | set(db_cats)))
+    return [(cat.lower(), cat.title()) for cat in all_cats]
+
 # ==========================================
 # DISCOVERY & SEARCH VIEWS
 # ==========================================
 
 def homepage(request):
-    """Displays top-rated providers and service categories."""
     top_providers = ServiceProvider.objects.all().order_by('-recommendation_score')[:6]
-    categories = ServiceProvider.SERVICE_CATEGORIES
     context = {
         'top_providers': top_providers,
-        'SERVICE_CATEGORIES': categories,
+        'SERVICE_CATEGORIES': get_dynamic_categories(), # CHANGED HERE
     }
     return render(request, 'services/home.html', context)
 
 def search_providers(request):
-    """Advanced search with Nearby and Rating filters."""
     category_query = request.GET.get('category', '')
     location_query = request.GET.get('location', '')
     filter_by = request.GET.get('filter_by', '')
     
-    # Persistent GPS data from Smart Location Picker
     user_lat = request.GET.get('user_lat')
     user_lng = request.GET.get('user_lng')
 
     providers = ServiceProvider.objects.all()
 
-    # 1. Standard QuerySet filters
     if category_query:
         providers = providers.filter(service_category=category_query)
     
-    # FIX: Only apply text location filter if coordinates ARE NOT present
     if location_query and not (user_lat and user_lng):
         providers = providers.filter(location__icontains=location_query)
 
-    # 2. Advanced Annotation (Using 'received_reviews')
     if "top_rated" in filter_by:
         providers = providers.annotate(avg_rating=Avg('received_reviews__rating'))
 
-    # Convert to list for in-memory distance calculation and custom sorting
     providers_list = list(providers)
 
     if "nearby" in filter_by:
@@ -69,7 +69,6 @@ def search_providers(request):
                     else:
                         p.distance_km = None
                 
-                # Sort: Distance primarily, Rating secondarily
                 if filter_by == "nearby_top_rated":
                     providers_list.sort(key=lambda x: (x.distance_km is None, x.distance_km, -(x.avg_rating or 0)))
                 else:
@@ -79,7 +78,6 @@ def search_providers(request):
     elif filter_by == "top_rated":
         providers_list.sort(key=lambda x: (getattr(x, 'avg_rating', None) is None, -(getattr(x, 'avg_rating', 0) or 0)))
     else:
-        # Default fallback: Sort by the system recommendation score
         providers_list.sort(key=lambda x: -x.recommendation_score)
 
     context = {
@@ -89,12 +87,11 @@ def search_providers(request):
         'filter_by': filter_by,
         'user_lat': user_lat,
         'user_lng': user_lng,
-        'SERVICE_CATEGORIES': ServiceProvider.SERVICE_CATEGORIES,
+        'SERVICE_CATEGORIES': get_dynamic_categories(), # CHANGED HERE
     }
     return render(request, 'services/search_results.html', context)
 
 def provider_profile(request, provider_id):
-    """Shows detailed provider info, average rating, and reviews."""
     provider = get_object_or_404(ServiceProvider, id=provider_id)
     reviews = Review.objects.filter(provider=provider).order_by('-created_at')
     avg_rating_data = reviews.aggregate(Avg('rating'))
@@ -111,6 +108,7 @@ def provider_profile(request, provider_id):
 # ==========================================
 # BOOKING & DASHBOARD VIEWS
 # ==========================================
+# (These remain exactly the same as your code)
 
 @login_required
 def create_booking(request, provider_id):
@@ -168,13 +166,8 @@ def update_booking_status(request, booking_id, new_status):
         messages.info(request, f"Status updated to {new_status}.")
     return redirect('provider_dashboard')
 
-# ==========================================
-# REVIEW & FEEDBACK VIEWS
-# ==========================================
-
 @login_required
 def submit_review(request, booking_id):
-    """Allows a customer to rate a provider after a service is completed."""
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     
     if request.method == 'POST':
