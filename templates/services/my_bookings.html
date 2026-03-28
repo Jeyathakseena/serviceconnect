@@ -4,70 +4,77 @@
 {% block title %}My Bookings | ServiceConnect{% endblock %}
 
 {% block content %}
-<div class="container py-5 mt-2">
+<div class="container py-5 mt-2 mb-5">
     <div class="d-flex align-items-center justify-content-between mb-5">
-        <h2 class="fw-bold mb-0">My Bookings</h2>
-        <a href="{% url 'home' %}" class="btn btn-primary-custom px-4">Find a Service</a>
+        <h2 class="fw-extrabold mb-0 text-dark tracking-tight">My Bookings</h2>
+        <a href="{% url 'home' %}" class="btn btn-sunset px-4 shadow-sm">Find a Service</a>
     </div>
 
     <div class="row g-4">
         {% for booking in bookings %}
         <div class="col-12">
-            <div class="card booking-card border-0 shadow-sm rounded-4">
-                <div>
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                            <i class="fa-solid fa-user text-secondary opacity-50"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-0">{{ booking.provider.user.get_full_name }}</h5>
-                            <span class="text-primary small fw-semibold">{{ booking.provider.get_service_category_display }}</span>
-                        </div>
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden provider-card-clean" style="transform: none !important;">
+                <div class="row g-0">
+                    <div class="col-md-2 d-flex flex-column align-items-center justify-content-center p-4 text-center border-end" style="background: #F8F9FC;">
+                        <h2 class="fw-extrabold mb-0 text-dark" style="font-size: 2.5rem;">{{ booking.service_date|date:"d" }}</h2>
+                        <span class="text-uppercase fw-bold text-sunset small">{{ booking.service_date|date:"M Y" }}</span>
+                        <hr class="w-50 my-2 opacity-25">
+                        <span class="small text-muted fw-medium"><i class="fa-solid fa-clock me-1"></i>{{ booking.service_time|time:"h:i A" }}</span>
                     </div>
-                </div>
 
-                <div class="border-start-md px-md-4">
-                    <span class="fw-bold d-block">{{ booking.service_date|date:"M d, Y" }}</span>
-                    <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i>{{ booking.service_time|time:"h:i A" }}</span>
-                </div>
+                    <div class="col-md-10 p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm text-white" style="width: 50px; height: 50px; background: var(--sunset-gradient);">
+                                    <i class="fa-solid fa-user-tie fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">{{ booking.provider.user.get_full_name }}</h5>
+                                    <span class="text-sunset small fw-bold">{{ booking.provider.service_category|title }}</span>
+                                </div>
+                            </div>
 
-                <div class="border-start-md px-md-4">
-                    <strong class="text-dark small d-block mb-1">Your Request:</strong>
-                    <p class="text-secondary small mb-0">{{ booking.description|truncatechars:60 }}</p>
-                </div>
+                            <div class="text-md-end mt-2 mt-md-0">
+                                {% if booking.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-circle-half-stroke me-1"></i> Pending</span>
+                                {% elif booking.status == 'confirmed' %}
+                                    <span class="badge bg-info text-white px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-calendar-check me-1"></i> Confirmed</span>
+                                {% elif booking.status == 'completed' %}
+                                    <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-check-double me-1"></i> Completed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                <div class="text-md-end">
-                    <div class="mb-2">
-                        {% if booking.status == 'pending' %}
-                            <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-                        {% elif booking.status == 'confirmed' %}
-                            <span class="badge bg-primary px-3 py-2">Confirmed</span>
-                        {% elif booking.status == 'completed' %}
-                            <span class="badge bg-success px-3 py-2">Completed ✓</span>
-                        {% else %}
-                            <span class="badge bg-secondary px-3 py-2">Cancelled</span>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        {% if booking.status == 'completed' and not booking.review_set.exists %}
-                            <a href="{% url 'submit_review' booking.id %}" class="btn btn-sm btn-primary-custom">Leave a Review</a>
-                        {% endif %}
-                        <a href="{% url 'provider_profile' booking.provider.id %}" class="btn btn-outline-secondary btn-sm rounded-pill">View Profile</a>
+                        <div class="p-3 rounded-4 mb-4" style="background: #F1F5F9;">
+                            <p class="mb-0 text-secondary fw-medium small"><span class="text-dark fw-bold">Your Request:</span> {{ booking.description }}</p>
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-end align-items-center mt-3">
+                            {% if booking.status == 'completed' and not booking.review_set.exists %}
+                                <a href="{% url 'submit_review' booking.id %}" class="btn btn-sunset rounded-pill fw-bold shadow-sm d-inline-flex align-items-center justify-content-center" style="padding: 10px 24px !important;">
+                                    <i class="fa-solid fa-star me-2"></i> Leave a Review
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'provider_profile' booking.provider.id %}" class="btn btn-outline-dark rounded-pill fw-bold d-inline-flex align-items-center justify-content-center" style="padding: 10px 24px !important;">
+                                View Profile
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-12 text-center py-5">
-            <div class="p-5 bg-white rounded-4 shadow-sm border border-light-subtle">
-                <i class="fa-solid fa-calendar-xmark fa-4x text-muted opacity-25 mb-3"></i>
-                <h4 class="fw-bold">No bookings done yet</h4>
-                <p class="text-muted mb-4">You haven't requested any services. Need a plumber, electrician, or tutor?</p>
-                <a href="{% url 'home' %}" class="btn btn-primary-custom px-4 py-2">
-                    <i class="fa-solid fa-magnifying-glass me-2"></i>Find Professional Help
-                </a>
+        <div class="col-12 text-center py-5 rounded-4" style="background: white; border: 2px dashed #E2E8F0;">
+            <div class="mb-3">
+                <i class="fa-regular fa-calendar-xmark fa-4x text-muted opacity-25"></i>
             </div>
+            <h3 class="fw-extrabold text-dark">No bookings yet</h3>
+            <p class="text-muted fw-medium mb-4" style="max-width: 400px; margin: 0 auto;">You haven't requested any services. Need a plumber, electrician, or tutor?</p>
+            <a href="{% url 'home' %}" class="btn btn-sunset px-5 py-3 rounded-pill shadow-sm fw-bold">
+                <i class="fa-solid fa-magnifying-glass me-2"></i>Find Professional Help
+            </a>
         </div>
         {% endfor %}
     </div>

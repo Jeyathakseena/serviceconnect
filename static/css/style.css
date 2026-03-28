@@ -1,106 +1,156 @@
 /* ==========================================================================
-   ServiceConnect Global Styles - DARK & GOLD THEME
+   ServiceConnect Global Styles - PREMIUM SAAS THEME (Lavender & Sunset)
    ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --primary-dark: #0f172a;    /* Deep Slate/Black */
-    --primary-blue: #1E3A5F;   
-    --accent: #FFD700;         /* Gold */
-    --accent-hover: #f59e0b;   
+    /* Backgrounds */
+    --bg-main: #F8F9FC;         /* Soft lavender-tinted white */
+    --bg-card: #FFFFFF;
+    
+    /* Text */
+    --text-dark: #0F172A;       /* Slate Dark */
+    --text-muted: #64748B;      /* Slate Grey */
+    
+    /* The Sunset Gradient (Primary Accent) */
+    --sunset-start: #FF7170;    /* Vibrant Coral */
+    --sunset-end: #FFA372;      /* Warm Orange */
+    --sunset-gradient: linear-gradient(135deg, var(--sunset-start), var(--sunset-end));
+    --sunset-glow: rgba(255, 113, 112, 0.3);
+    
+    /* Semantic */
     --success: #10b981;
-    --warning: #f59e0b;
-    --grey-light: #f8fafc;
+    --success-light: #d1fae5;
+    
+    /* Shadows */
+    --shadow-soft: 0 10px 40px rgba(15, 23, 42, 0.04);
+    --shadow-hover: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--grey-light);
-    color: #334155;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    line-height: 1.6;
 }
 
-/* NAVBAR DARK THEME */
-.navbar { 
-    background-color: var(--primary-dark) !important; 
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.navbar-brand, .nav-link { 
-    color: white !important; 
-}
-.nav-link:hover { 
-    color: var(--accent) !important; 
+/* =========================================
+   GLASSMORPHISM COMPONENTS
+   ========================================= */
+.glass-nav {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-/* THE FIX FOR CRAMPED BOOKINGS */
-.booking-card {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    position: relative;
-    padding: 30px !important;
+.glass-panel {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    border-radius: 100px;
+    padding: 8px;
 }
 
-@media (min-width: 768px) {
-    .booking-card {
-        grid-template-columns: 2fr 2fr 3fr 2fr;
-        align-items: center;
-    }
-}
-
-/* Moving the badge so it doesn't overlap buttons */
-.booking-status-container {
-    margin-bottom: 15px;
-}
-
-/* Primary Button - Gold Theme */
-.btn-primary-custom {
-    background: var(--accent);
-    color: var(--primary-dark) !important;
+/* =========================================
+   BUTTONS & BADGES
+   ========================================= */
+.btn-sunset {
+    background: var(--sunset-gradient);
+    color: white !important;
     border: none;
     border-radius: 50rem;
-    padding: 10px 24px;
+    padding: 12px 28px;
     font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.8rem;
     letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px var(--sunset-glow);
+}
+
+.btn-sunset:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px var(--sunset-glow);
+}
+
+.badge-sunset {
+    background: var(--sunset-gradient);
+    color: white;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 50rem;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 10px var(--sunset-glow);
+}
+
+.text-sunset {
+    background: var(--sunset-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* =========================================
+   CARDS & HOVER PHYSICS
+   ========================================= */
+.provider-card-clean {
+    background: var(--bg-card);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.8);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.provider-card-clean:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(255, 113, 112, 0.2);
+}
+
+.category-card {
+    border-radius: 20px;
     transition: all 0.3s ease;
+    background: var(--bg-card);
 }
-
-.btn-primary-custom:hover {
-    background: white;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-soft);
 }
-
-/* Category Icons */
 .category-card i {
-    color: var(--accent);
+    font-size: 2rem;
+    margin-bottom: 15px;
+    background: var(--sunset-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* The Search Bar Location Badge */
-.location-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
+/* =========================================
+   MISCELLANEOUS
+   ========================================= */
+.location-wrapper { position: relative; display: flex; align-items: center; }
 .location-badge {
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 4px 10px;
-    background: #dcfce7; /* Light Green */
-    color: #166534;     /* Dark Green Text */
-    border-radius: 6px;
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: none;      /* Hidden by default, shown by JS */
-    white-space: nowrap;
-    z-index: 5;
-    border: 1px solid #bbf7d0;
+    background: var(--success-light);
+    color: var(--success);
+    border-radius: 8px;
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    display: none; z-index: 5;
 }
+#locationInput { padding-right: 85px !important; }
 
-/* Ensure the input text doesn't overlap the badge */
-#locationInput {
-    padding-right: 85px !important; 
+/* Mobile Responsive Fixes */
+@media (max-width: 767.98px) {
+    /* Changes the squished oval into a clean, rounded rectangle on phones */
+    .glass-panel {
+        border-radius: 24px !important;
+        padding: 20px !important;
+    }
+    
+    /* Adds a little breathing room between the stacked form items */
+    .glass-panel .input-group {
+        margin-bottom: 5px;
+    }
 }

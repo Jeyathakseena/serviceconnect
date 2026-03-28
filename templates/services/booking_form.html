@@ -4,94 +4,121 @@
 {% block title %}Book {{ provider.user.get_full_name }} | ServiceConnect{% endblock %}
 
 {% block content %}
-<div class="container py-5 mt-2">
+<style>
+    .mini-squircle {
+        width: 100px; height: 100px; object-fit: cover;
+        border-radius: 24px; border: 4px solid white; box-shadow: var(--shadow-soft);
+    }
+    .form-control-custom {
+        background: #F8F9FC !important;
+        border: 2px solid transparent !important;
+        border-radius: 12px;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    .form-control-custom:focus {
+        border-color: #FFA372 !important;
+        box-shadow: 0 0 0 4px rgba(255, 163, 114, 0.1) !important;
+        background: white !important;
+    }
+    .input-group-text-custom {
+        background: #F8F9FC;
+        border: 2px solid transparent;
+        border-radius: 12px 0 0 12px;
+        color: var(--sunset-start);
+    }
+</style>
+
+<div class="container py-5 mt-2 mb-5">
     <div class="mb-5">
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'provider_profile' provider.id %}" class="text-decoration-none">Provider Profile</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Booking</li>
+            <ol class="breadcrumb fw-medium small">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-muted text-decoration-none hover-sunset">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'provider_profile' provider.id %}" class="text-muted text-decoration-none hover-sunset">Provider Profile</a></li>
+                <li class="breadcrumb-item active text-sunset fw-bold" aria-current="page">Booking Details</li>
             </ol>
         </nav>
-        <h2 class="fw-bold">Schedule Your Service</h2>
+        <h2 class="fw-extrabold text-dark tracking-tight">Schedule Your Service</h2>
     </div>
 
     <div class="row g-5">
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px; border-radius: 20px;">
+            <div class="card border-0 shadow-sm p-4 sticky-top provider-card-clean" style="top: 100px; transform: none !important;">
                 <div class="text-center mb-4">
                     {% if provider.profile_picture %}
-                        <img src="{{ provider.profile_picture.url }}" class="rounded-circle shadow-sm border border-3 border-white" 
-                             style="width: 120px; height: 120px; object-fit: cover;" alt="{{ provider.user.get_full_name }}">
+                        <img src="{{ provider.profile_picture.url }}" class="mini-squircle mx-auto" alt="{{ provider.user.get_full_name }}">
                     {% else %}
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white mx-auto shadow-sm" 
-                             style="width: 120px; height: 120px; font-size: 2.5rem; font-weight: 700;">
+                        <div class="mini-squircle bg-primary d-flex align-items-center justify-content-center text-white mx-auto" 
+                             style="background: var(--sunset-gradient) !important; font-size: 2.5rem; font-weight: 800;">
                             {{ provider.user.first_name|first }}{{ provider.user.last_name|first }}
                         </div>
                     {% endif %}
-                    <h4 class="fw-bold mt-3 mb-1">{{ provider.user.get_full_name }}</h4>
-                    <span class="badge status-confirmed px-3 py-2">{{ provider.get_service_category_display }}</span>
+                    <h4 class="fw-extrabold mt-4 mb-2 text-dark">{{ provider.user.get_full_name }}</h4>
+                    <span class="badge-sunset">{{ provider.service_category|title }}</span>
                 </div>
 
-                <div class="border-top pt-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted small"><i class="fa-solid fa-location-dot me-2"></i>Location</span>
-                        <span class="fw-semibold small">{{ provider.location }}</span>
-                    </div>
+                <div class="border-top pt-4">
                     <div class="d-flex justify-content-between mb-3">
-                        <span class="text-muted small"><i class="fa-solid fa-clock me-2"></i>Rate</span>
-                        <span class="text-success fw-bold">₹{{ provider.hourly_rate }}/hr</span>
+                        <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;"><i class="fa-solid fa-location-dot me-2"></i>Location</span>
+                        <span class="fw-extrabold text-dark small">{{ provider.location }}</span>
                     </div>
-                    <p class="text-muted small mb-0 lh-sm">
-                        <strong>Bio:</strong> {{ provider.bio|truncatewords:30 }}
-                    </p>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;"><i class="fa-solid fa-clock me-2"></i>Rate</span>
+                        <span class="text-success fw-extrabold">₹{{ provider.hourly_rate }}/hr</span>
+                    </div>
+                    <div class="p-3 rounded-4" style="background: #F8F9FC;">
+                        <p class="text-muted small fw-medium mb-0 lh-base">
+                            <strong class="text-dark">Bio Overview:</strong><br/> 
+                            {{ provider.bio|truncatewords:20 }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-8">
-            <div class="card border-0 shadow-lg p-4 p-md-5" style="border-radius: 25px;">
-                <h3 class="fw-bold mb-4">Book {{ provider.user.get_full_name }}</h3>
+            <div class="card border-0 shadow-sm p-4 p-md-5 provider-card-clean" style="transform: none !important;">
+                <h3 class="fw-extrabold mb-4 text-dark">Appointment Request</h3>
                 
                 <form method="POST" action="">
                     {% csrf_token %}
                     
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="service_date" class="form-label fw-bold text-secondary small text-uppercase">Service Date</label>
+                            <label for="service_date" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Service Date</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-calendar text-primary"></i></span>
-                                <input type="date" name="service_date" id="service_date" class="form-control form-control-lg bg-light border-start-0" required>
+                                <span class="input-group-text input-group-text-custom border-end-0"><i class="fa-solid fa-calendar text-sunset"></i></span>
+                                <input type="date" name="service_date" id="service_date" class="form-control form-control-lg form-control-custom border-start-0" required>
                             </div>
-                            <div class="form-text small text-muted">Select when you need the service.</div>
                         </div>
 
                         <div class="col-md-6 mb-4">
-                            <label for="service_time" class="form-label fw-bold text-secondary small text-uppercase">Preferred Time</label>
+                            <label for="service_time" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Preferred Time</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-clock text-primary"></i></span>
-                                <input type="time" name="service_time" id="service_time" class="form-control form-control-lg bg-light border-start-0" required>
+                                <span class="input-group-text input-group-text-custom border-end-0"><i class="fa-solid fa-clock text-sunset"></i></span>
+                                <input type="time" name="service_time" id="service_time" class="form-control form-control-lg form-control-custom border-start-0" required>
                             </div>
-                            <div class="form-text small text-muted">What time works best for you?</div>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="description" class="form-label fw-bold text-secondary small text-uppercase">Describe what you need</label>
-                        <textarea name="description" id="description" rows="5" class="form-control bg-light p-3" 
+                        <label for="description" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Describe the Job</label>
+                        <textarea name="description" id="description" rows="5" class="form-control form-control-custom" 
                                   placeholder="E.g., I have a leaky pipe under the kitchen sink that needs fixing immediately..." required></textarea>
+                        <div class="form-text small text-muted mt-2 fw-medium">The more details you provide, the better {{ provider.user.first_name }} can prepare.</div>
                     </div>
 
-                    <div class="p-3 mb-4 rounded-3 border-start border-primary border-4" style="background-color: #f0f7ff;">
-                        <p class="mb-0 small text-muted">
-                            <i class="fa-solid fa-circle-info text-primary me-2"></i>
-                            Your request will be sent to the provider. They will review it and confirm their availability.
+                    <div class="p-4 mb-5 rounded-4 d-flex align-items-center" style="background-color: #FFF0F0; border-left: 4px solid var(--sunset-start);">
+                        <i class="fa-solid fa-circle-info text-sunset fs-3 me-3"></i>
+                        <p class="mb-0 small text-dark fw-medium">
+                            Your request will be sent securely. You won't be charged until the provider accepts and completes the job.
                         </p>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary-custom btn-lg py-3 fw-bold fs-5 shadow">
-                            Confirm Booking <i class="fa-solid fa-paper-plane ms-2"></i>
+                        <button type="submit" class="btn btn-sunset btn-lg py-3 fw-extrabold fs-5 rounded-pill shadow">
+                            Confirm Request <i class="fa-solid fa-paper-plane ms-2"></i>
                         </button>
                     </div>
                 </form>
@@ -101,7 +128,6 @@
 </div>
 
 <script>
-    // Simple JS to prevent booking in the past
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.getElementById('service_date');
         const today = new Date().toISOString().split('T')[0];
