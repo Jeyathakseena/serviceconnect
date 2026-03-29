@@ -170,6 +170,11 @@ def update_booking_status(request, booking_id, new_status):
 def submit_review(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     
+    # SAFETY CHECK: If a review already exists for this booking, prevent duplicate submission
+    if hasattr(booking, 'review'):
+        messages.warning(request, "You have already left a review for this booking!")
+        return redirect('my_bookings')
+    
     if request.method == 'POST':
         Review.objects.create(
             booking=booking,
