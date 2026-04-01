@@ -21,4 +21,7 @@ urlpatterns = [
 
     path('api/check-emergencies/', views.check_emergencies, name='check_emergencies'),
     path('sos/accept/<int:emergency_id>/', views.accept_emergency, name='accept_emergency'),
+
+    # AI Chatbot endpoint
+    path('chat-api/', views.chatbot_api, name='chatbot_api'),
 ]

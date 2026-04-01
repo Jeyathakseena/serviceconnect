@@ -3,6 +3,11 @@ Django settings for ServiceConnect project.
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -112,3 +117,6 @@ LOGIN_URL = '/accounts/login/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Load the API key from the .env file securely
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')

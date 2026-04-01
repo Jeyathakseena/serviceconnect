@@ -25,6 +25,73 @@
             70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
         }
+
+        /* ========================================== */
+        /* CHATBOT UI FIXES */
+        /* ========================================== */
+        #chat-toggle-btn {
+            position: fixed !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 2000 !important;
+        }
+
+        #chat-window {
+            position: fixed !important;
+            bottom: 110px !important; /* Always pins to the bottom */
+            right: 30px !important;
+            width: 350px;
+            height: 500px; /* Fixed height */
+            max-height: calc(100vh - 140px); /* Prevents going off the top on small laptops */
+            z-index: 2000 !important;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+        }
+
+        #chat-messages {
+            flex-grow: 1; /* Forces the message area to take up all empty space */
+            overflow-y: auto;
+        }
+
+        /* Flexbox perfectly aligns the input and button */
+        #chat-form {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px;
+            width: 100%;
+            margin: 0;
+        }
+
+        #chat-input {
+            flex-grow: 1; /* Takes up remaining width */
+            height: 45px;
+        }
+
+        .btn-send-fixed {
+            flex-shrink: 0; /* Prevents the button from turning into an oval */
+            width: 45px !important;
+            height: 45px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 !important;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 576px) {
+            #chat-toggle-btn {
+                bottom: 20px !important;
+                right: 20px !important;
+            }
+            #chat-window {
+                bottom: 95px !important;
+                right: 15px !important;
+                width: calc(100vw - 30px); /* Takes up full screen width minus margins */
+                height: 600px; /* Taller on mobile for easier typing */
+                max-height: calc(100vh - 120px);
+            }
+        }
     </style>
 </head>
 <body>
@@ -166,10 +233,44 @@
       </div>
     </div>
 
+    <button id="chat-toggle-btn" class="btn btn-sunset rounded-circle shadow-lg d-flex align-items-center justify-content-center">
+        <i class="fa-solid fa-robot fs-3 text-white"></i>
+    </button>
+
+    <div id="chat-window" class="card shadow-lg border-0 d-none">
+        
+        <div class="card-header text-white d-flex justify-content-between align-items-center p-3" style="background: var(--sunset-gradient);">
+            <div class="d-flex align-items-center">
+                <i class="fa-solid fa-headset me-2 fs-5"></i>
+                <h6 class="mb-0 fw-bold">ServiceConnect AI</h6>
+            </div>
+            <button id="close-chat-btn" class="btn-close btn-close-white" aria-label="Close"></button>
+        </div>
+        
+        <div id="chat-messages" class="card-body p-3" style="background-color: #F8F9FC;">
+            <div class="d-flex mb-3">
+                <div class="p-3 rounded-4 bg-white shadow-sm border" style="max-width: 85%; border-bottom-left-radius: 4px !important;">
+                    <p class="mb-0 small text-dark fw-medium">Vanakkam! 👋 I am the ServiceConnect AI assistant. Do you need help booking a service or managing your dashboard?</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-white p-3 border-top">
+            <form id="chat-form">
+                {% csrf_token %}
+                <input type="text" id="chat-input" class="form-control rounded-pill bg-light border-0 px-3" placeholder="Type your question..." autocomplete="off" required>
+                <button type="submit" class="btn btn-sunset rounded-circle btn-send-fixed shadow-sm">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- Location & SOS Logic ---
         const input = document.getElementById('locationInput');
         const dropdown = document.getElementById('locationDropdown');
         const useLocation = document.getElementById('useCurrentLocation');
@@ -223,7 +324,6 @@
             });
         }
 
-        // --- NEW: SOS Logic ---
         const categorySelect = document.getElementById('emergencyCategory');
         if (categorySelect) {
             categorySelect.addEventListener('change', function() {
@@ -268,6 +368,87 @@
                 }
             });
         }
+
+        // --- NEW: Chatbot Interaction Logic ---
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        const chatWindow = document.getElementById('chat-window');
+        const closeChatBtn = document.getElementById('close-chat-btn');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        function toggleChat() {
+            chatWindow.classList.toggle('d-none');
+            if (!chatWindow.classList.contains('d-none')) {
+                chatInput.focus();
+                chatToggleBtn.style.transform = 'scale(0)';
+            } else {
+                chatToggleBtn.style.transform = 'scale(1)';
+            }
+        }
+
+        chatToggleBtn.addEventListener('click', toggleChat);
+        closeChatBtn.addEventListener('click', toggleChat);
+
+        function appendMessage(sender, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `d-flex mb-3 ${sender === 'user' ? 'justify-content-end' : ''}`;
+            
+            const bubbleColor = sender === 'user' ? 'background: var(--sunset-start); color: white;' : 'background: white; color: #333; border: 1px solid #dee2e6;';
+            const borderRadius = sender === 'user' ? 'border-bottom-right-radius: 4px !important;' : 'border-bottom-left-radius: 4px !important;';
+            
+            msgDiv.innerHTML = `
+                <div class="p-3 rounded-4 shadow-sm" style="max-width: 85%; ${bubbleColor} ${borderRadius}">
+                    <p class="mb-0 small fw-medium">${text}</p>
+                </div>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendMessage('user', message);
+            chatInput.value = '';
+
+            const typingId = 'typing-' + Date.now();
+            const typingDiv = document.createElement('div');
+            typingDiv.id = typingId;
+            typingDiv.className = 'd-flex mb-3';
+            typingDiv.innerHTML = `
+                <div class="p-3 rounded-4 bg-white shadow-sm border d-flex gap-1 align-items-center" style="border-bottom-left-radius: 4px !important;">
+                    <div class="spinner-grow spinner-grow-sm text-secondary" role="status" style="width: 0.5rem; height: 0.5rem;"></div>
+                    <div class="spinner-grow spinner-grow-sm text-secondary" role="status" style="width: 0.5rem; height: 0.5rem; animation-delay: 0.2s;"></div>
+                    <div class="spinner-grow spinner-grow-sm text-secondary" role="status" style="width: 0.5rem; height: 0.5rem; animation-delay: 0.4s;"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const formData = new FormData();
+            formData.append('message', message);
+            // Grab CSRF from the form we just submitted
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch("{% url 'chatbot_api' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById(typingId).remove();
+                // Simple bold markdown parsing
+                let formattedReply = data.reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                appendMessage('bot', formattedReply);
+            })
+            .catch(error => {
+                document.getElementById(typingId).remove();
+                appendMessage('bot', 'Network error. Please try again.');
+            });
+        });
     });
     </script>
 </body>

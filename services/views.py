@@ -7,6 +7,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Avg
+from django.conf import settings
+
 from accounts.models import ServiceProvider
 from .models import Review, Booking, EmergencyJob
 from .utils import update_all_scores
@@ -327,3 +329,87 @@ def accept_emergency(request, emergency_id):
             pass
             
     return redirect('provider_dashboard')
+
+# ==========================================
+# AI SUPPORT CHATBOT
+# ==========================================
+
+# 1. NEW IMPORTS
+from google import genai
+from google.genai import errors
+
+SYSTEM_INSTRUCTION = """
+# ROLE & IDENTITY
+You are the official "ServiceConnect Support Bot." Your exclusive purpose is to assist BOTH Customers and Service Providers in using the ServiceConnect platform.
+
+# KNOWLEDGE DOMAIN
+Your knowledge is strictly limited to the following platform features:
+
+**For Customers:**
+1. HOW TO BOOK: Explain searching for providers, clicking "Book Now," selecting dates, and using the GPS button to pin their exact address.
+2. EMERGENCY SOS: Explain the red SOS button. It broadcasts their live GPS coordinates to providers within a 30km radius for a rapid 10-minute dispatch.
+3. SERVICE CATEGORIES: We offer Plumbers, Electricians, Cleaners, Tutors, Carpenters, Painters, Mechanics, AND "Custom Services" (users can select 'Other' and type their specific, unique problem).
+4. PRICING: Basic service consultation visits start at ₹200.
+
+**For Service Providers:**
+1. DASHBOARD MANAGEMENT: Explain how to check the dashboard for Pending, Active, and Total bookings.
+2. ACCEPTING JOBS & NAVIGATION: Explain that they must click "Accept Job" to reveal the customer's exact address. Once accepted, a "Navigate" button appears that opens Google Maps.
+3. SOS ALERTS: Explain that their dashboard will flash a red alert and their mobile phone will physically vibrate if a nearby SOS is triggered. They must accept it quickly before the 10-minute timer expires or another provider claims the job.
+
+**General Platform Info:**
+- LOCATION: We proudly serve in Tamil Nadu.
+- CONTACT: For deep technical glitches, direct users to email support@serviceconnect.com.
+
+# STRICT GUARDRAILS (THE RED LINES)
+1. REFUSAL RULE: If a user asks about ANY topic not directly related to ServiceConnect (e.g., cooking, coding, writing stories, politics, history, general trivia), you MUST politely but firmly refuse. 
+   - *Example Refusal:* "I'm strictly wired for ServiceConnect duties. I can't help with that"
+2. NO HALLUCINATION: If you do not know the exact answer regarding the website's functionality, do not guess or make up features. Provide the support email.
+3. TASK BOUNDARIES: Do not write code, do not write essays, and do not generate off-topic creative content under any circumstances.
+
+# TONE & STYLE
+- Professional, Polite, Short and sweet give the exact answer.
+- Concise (Keep answers under 3 sentences).
+- Include a warm touch of South Indian hospitality where it feels natural (e.g., "Vanakkam!").
+"""
+
+def chatbot_api(request):
+    """ Handles AJAX requests from the floating chat window """
+    if request.method == "POST":
+        user_message = request.POST.get('message', '').strip()
+        
+        if not user_message:
+            return JsonResponse({'reply': "Please type a message."})
+
+        if not getattr(settings, 'GEMINI_API_KEY', None):
+            return JsonResponse({'reply': "I'm currently offline as my API Key hasn't been set up yet! Please contact support."})
+
+        full_prompt = f"{SYSTEM_INSTRUCTION}\n\nUser Question: {user_message}"
+
+        try:
+            # 2. NEW SDK INITIALIZATION
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            
+            # 3. NEW GENERATE CONTENT SYNTAX
+            response = client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=full_prompt
+            )
+            
+            if response.text:
+                return JsonResponse({'reply': response.text})
+            else:
+                return JsonResponse({'reply': "I heard you, but I couldn't generate an answer. Try asking differently!"})
+            
+        except errors.APIError as e:
+            # Check for the Free Tier Rate Limit (Error 429)
+            if e.code == 429:
+                return JsonResponse({'reply': "Vanakkam! I'm handling too many requests right now. Please try again in a minute, or email support@serviceconnect.in!"})
+            
+            print(f"DEBUG AI ERROR: {e}") 
+            return JsonResponse({'reply': "Oops, my circuits got crossed. Please check your internet connection and try again."})
+            
+        except Exception as e:
+            print(f"DEBUG AI ERROR: {e}") 
+            return JsonResponse({'reply': "Oops, my circuits got crossed. Please check your internet connection and try again."})
+            
+    return JsonResponse({'error': 'Invalid request'}, status=400)
