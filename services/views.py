@@ -117,6 +117,11 @@ def provider_profile(request, provider_id):
 @login_required
 def create_booking(request, provider_id):
     provider = get_object_or_404(ServiceProvider, id=provider_id)
+
+    if request.user == provider.user:
+        messages.error(request, "You cannot book your own services!")
+        return redirect('provider_profile', provider_id=provider.id)
+
     if request.method == 'POST':
         service_date = request.POST.get('service_date')
         service_time = request.POST.get('service_time')

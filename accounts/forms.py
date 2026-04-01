@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import ServiceProvider
+from .models import UserProfile, ServiceProvider
 
 class UserRegisterForm(UserCreationForm):
     """
@@ -81,3 +81,33 @@ class ServiceProviderForm(forms.ModelForm):
             self.add_error('service_category', 'Please select a category or type a new custom skill.')
         
         return cleaned_data
+
+# ==========================================
+# NEW: PROFILE UPDATE FORMS
+# ==========================================
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+class UserProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['phone', 'address']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+            
+        self.fields['address'].widget.attrs.update({'rows': 3})
+
+# Inherits all the dynamic category logic from ServiceProviderForm!
+class ServiceProviderUpdateForm(ServiceProviderForm):
+    pass

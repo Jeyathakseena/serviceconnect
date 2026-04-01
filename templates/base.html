@@ -127,6 +127,11 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2">
                                 <li>
+                                    <a class="dropdown-item rounded-3 mb-1 fw-medium" href="{% url 'profile' %}">
+                                        <i class="fa-regular fa-id-badge me-2 text-sunset"></i> My Profile
+                                    </a>
+                                </li>
+                                <li>
                                     <form method="post" action="{% url 'logout' %}" class="px-2">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-light text-danger fw-bold w-100 btn-sm rounded-3">Logout</button>
@@ -447,6 +452,49 @@
             .catch(error => {
                 document.getElementById(typingId).remove();
                 appendMessage('bot', 'Network error. Please try again.');
+            });
+        });
+    });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find all password inputs on the page
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        
+        passwordInputs.forEach(function(input) {
+            // 1. Create a Bootstrap input-group wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            
+            // 2. Put the wrapper where the input used to be
+            input.parentNode.insertBefore(wrapper, input);
+            
+            // 3. Move the input inside the wrapper
+            wrapper.appendChild(input);
+            
+            // 4. Fix the border so it blends smoothly with the button
+            input.style.borderRight = 'none';
+            
+            // 5. Create the Eye Button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'btn btn-outline-secondary bg-white text-muted';
+            toggleBtn.style.borderLeft = 'none';
+            toggleBtn.style.borderColor = '#dee2e6';
+            toggleBtn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+            
+            // 6. Add it next to the input
+            wrapper.appendChild(toggleBtn);
+            
+            // 7. Make it actually work when clicked!
+            toggleBtn.addEventListener('click', function() {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggleBtn.innerHTML = '<i class="fa-regular fa-eye-slash text-sunset"></i>';
+                } else {
+                    input.type = 'password';
+                    toggleBtn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+                }
             });
         });
     });

@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import UserRegisterForm, ServiceProviderForm
+from .forms import UserRegisterForm, ServiceProviderForm, UserUpdateForm, UserProfileUpdateForm, ServiceProviderUpdateForm
 from .models import UserProfile, ServiceProvider
 
 def geocode_city(city_name):
@@ -82,4 +82,53 @@ def register_provider(request):
 
 @login_required
 def profile(request):
-    return render(request, 'accounts/profile.html')
+    user = request.user
+    profile = user.profile
+    is_provider = profile.is_provider
+    provider = getattr(user, 'provider_profile', None)
+
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=user)
+        p_form = UserProfileUpdateForm(request.POST, instance=profile)
+        sp_form = None
+
+        if is_provider and provider:
+            sp_form = ServiceProviderUpdateForm(request.POST, request.FILES, instance=provider)
+
+        # Validate all necessary forms
+        if u_form.is_valid() and p_form.is_valid() and (not is_provider or sp_form.is_valid()):
+            u_form.save()
+            p_form.save()
+            
+            if is_provider and sp_form:
+                # Capture old location to check if we need to ping the Geocoding API again
+                old_location = provider.location
+                provider_instance = sp_form.save(commit=False)
+                
+                if provider_instance.location != old_location:
+                    lat, lng = geocode_city(provider_instance.location)
+                    if lat and lng:
+                        provider_instance.latitude = lat
+                        provider_instance.longitude = lng
+                
+                provider_instance.save()
+                
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+
+    else:
+        # Pre-fill forms with current user data
+        u_form = UserUpdateForm(instance=user)
+        p_form = UserProfileUpdateForm(instance=profile)
+        sp_form = ServiceProviderUpdateForm(instance=provider) if is_provider and provider else None
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form,
+        'sp_form': sp_form,
+        'is_provider': is_provider,
+        'provider': provider
+    }
+    return render(request, 'accounts/profile.html', context)
