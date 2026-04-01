@@ -24,6 +24,11 @@ class Booking(models.Model):
     
     # The specific time the service is requested for
     service_time = models.TimeField()
+
+    # NEW: Location Fields
+    address = models.TextField(help_text="Exact address for the service")
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     
     # Details about what service is needed
     description = models.TextField()
@@ -70,3 +75,42 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review by {self.reviewer.username} for {self.provider.user.username} - {self.rating} Stars"
+
+class EmergencyJob(models.Model):
+    """
+    Represents a real-time, high-priority SOS request broadcasted to nearby providers.
+    Expires automatically if not accepted within a short timeframe.
+    """
+    STATUS_CHOICES = [
+        ('searching', 'Searching for Providers'),
+        ('accepted', 'Accepted by Provider'),
+        ('expired', 'Expired (No Response)'),
+    ]
+
+    # Who is experiencing the emergency?
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergencies')
+    
+    # What kind of help do they need? (e.g., 'plumber', 'electrician')
+    service_category = models.CharField(max_length=100)
+    
+    # Exact location of the emergency for the radius radar
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    
+    # The current state of the SOS beacon
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='searching')
+    
+    # The specific provider who clicked "Accept" first. (Blank until someone claims it)
+    accepted_by = models.ForeignKey(
+        ServiceProvider, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='claimed_emergencies'
+    )
+    
+    # The timestamp. This is critical for our 10-minute expiration math!
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"SOS: {self.service_category} needed by {self.customer.username} at {self.created_at.strftime('%H:%M')}"

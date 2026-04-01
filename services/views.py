@@ -1,12 +1,15 @@
 import math
 import json
+from django.utils import timezone
+from datetime import timedelta
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Avg
 from accounts.models import ServiceProvider
-from .models import Review, Booking
-from .utils import update_all_scores 
+from .models import Review, Booking, EmergencyJob
+from .utils import update_all_scores
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
@@ -108,7 +111,6 @@ def provider_profile(request, provider_id):
 # ==========================================
 # BOOKING & DASHBOARD VIEWS
 # ==========================================
-# (These remain exactly the same as your code)
 
 @login_required
 def create_booking(request, provider_id):
@@ -117,12 +119,18 @@ def create_booking(request, provider_id):
         service_date = request.POST.get('service_date')
         service_time = request.POST.get('service_time')
         description = request.POST.get('description')
+        address = request.POST.get('address')
+        lat = request.POST.get('lat')
+        lng = request.POST.get('lng')
         
         Booking.objects.create(
             user=request.user,
             provider=provider,
             service_date=service_date,
             service_time=service_time,
+            address=address,
+            latitude=float(lat) if lat else None,
+            longitude=float(lng) if lng else None,
             description=description,
             status='pending'
         )
@@ -188,3 +196,134 @@ def submit_review(request, booking_id):
         return redirect('my_bookings')
         
     return render(request, 'services/review_form.html', {'booking': booking})
+
+# ==========================================
+# EMERGENCY SOS SYSTEM
+# ==========================================
+
+@login_required
+def trigger_emergency(request):
+    if request.method == 'POST':
+        category = request.POST.get('emergency_category')
+        
+        # NEW: Check if they selected "Other" and grab the custom text
+        if category == 'other':
+            category = request.POST.get('custom_category')
+            
+        lat = request.POST.get('user_lat')
+        lng = request.POST.get('user_lng')
+
+        # Safety check: We can't dispatch without a location
+        if not lat or not lng:
+            messages.error(request, "Emergency Dispatch requires your exact location. Please allow location access.")
+            return redirect('home')
+
+        # Drop the SOS Beacon into the database
+        emergency = EmergencyJob.objects.create(
+            customer=request.user,
+            service_category=category,
+            latitude=float(lat),
+            longitude=float(lng),
+            status='searching'
+        )
+        
+        # Send them to the waiting radar screen
+        return redirect('emergency_radar', emergency_id=emergency.id)
+        
+    return redirect('home')
+
+@login_required
+def emergency_radar(request, emergency_id):
+    emergency = get_object_or_404(EmergencyJob, id=emergency_id, customer=request.user)
+    
+    # If a provider has already accepted it, redirect to a success page
+    if emergency.status == 'accepted':
+        messages.success(request, f"Help is on the way! {emergency.accepted_by.user.get_full_name()} has accepted your SOS.")
+        return redirect('my_bookings')
+        
+    return render(request, 'services/emergency_radar.html', {'emergency': emergency})
+
+@login_required
+def check_emergencies(request):
+    """ API Endpoint: Checks if this provider is in the Top 10 closest for any active emergency """
+    try:
+        provider = ServiceProvider.objects.get(user=request.user)
+    except ServiceProvider.DoesNotExist:
+        return JsonResponse({'emergencies': []}) # Not a provider
+        
+    if not provider.latitude or not provider.longitude:
+        return JsonResponse({'emergencies': []}) # Cannot dispatch to providers without a location
+
+    # 1. Housekeeping: Auto-expire emergencies older than 10 minutes
+    ten_mins_ago = timezone.now() - timedelta(minutes=10)
+    EmergencyJob.objects.filter(status='searching', created_at__lt=ten_mins_ago).update(status='expired')
+
+    # 2. Find active emergencies
+    active_emergencies = EmergencyJob.objects.filter(status='searching')
+    
+    my_alerts = []
+    for emergency in active_emergencies:
+        # Only notify if categories match (or if it's a custom 'other' emergency)
+        if emergency.service_category != 'other' and emergency.service_category.lower() != provider.service_category.lower():
+            continue 
+
+        # 3. The Math: Find all eligible providers and calculate their distances
+        all_eligible = ServiceProvider.objects.filter(service_category=provider.service_category).exclude(latitude__isnull=True)
+        
+        provider_distances = []
+        for p in all_eligible:
+            dist = haversine(emergency.latitude, emergency.longitude, p.latitude, p.longitude)
+            if dist <= 30.0:
+                provider_distances.append((dist, p.id))
+        
+        # Sort by closest distance and slice the top 10!
+        provider_distances.sort(key=lambda x: x[0])
+        top_10_ids = [pd[1] for pd in provider_distances[:10]]
+
+        # 4. If this provider is in the Top 10, send the alert!
+        if provider.id in top_10_ids:
+            my_distance = next(pd[0] for pd in provider_distances if pd[1] == provider.id)
+            time_ago = int((timezone.now() - emergency.created_at).total_seconds() / 60)
+            
+            my_alerts.append({
+                'id': emergency.id,
+                'category': emergency.service_category.title() if emergency.service_category != 'other' else 'Custom Request',
+                'distance': round(my_distance, 1),
+                'time_ago': time_ago
+            })
+
+    return JsonResponse({'emergencies': my_alerts})
+
+@login_required
+def accept_emergency(request, emergency_id):
+    """ Handles the race condition when a provider clicks Accept """
+    if request.method == 'POST':
+        try:
+            provider = ServiceProvider.objects.get(user=request.user)
+            emergency = get_object_or_404(EmergencyJob, id=emergency_id)
+
+            # Check if it is still available
+            if emergency.status == 'searching':
+                emergency.status = 'accepted'
+                emergency.accepted_by = provider
+                emergency.save()
+                
+                # Automatically create a confirmed booking for their dashboard!
+                Booking.objects.create(
+                    user=emergency.customer,
+                    provider=provider,
+                    service_date=timezone.now().date(),
+                    service_time=timezone.now().time(),
+                    description=f"EMERGENCY SOS DISPATCH: {emergency.service_category.title()}",
+                    address="EMERGENCY SOS: Customer Location pinned via GPS",
+                    latitude=emergency.latitude,
+                    longitude=emergency.longitude,
+                    status='confirmed'
+                )
+                messages.success(request, f"SOS Accepted! You are now dispatched to help {emergency.customer.first_name}.")
+            else:
+                messages.error(request, "Too slow! Another professional just claimed this emergency.")
+        except ServiceProvider.DoesNotExist:
+            pass
+            
+    return redirect('provider_dashboard')

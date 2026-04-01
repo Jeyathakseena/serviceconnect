@@ -28,6 +28,12 @@
         border-radius: 12px 0 0 12px;
         color: var(--sunset-start);
     }
+    #btn-location-capture {
+        border-radius: 0 12px 12px 0;
+        background: #F8F9FC;
+        border: 2px solid transparent;
+        color: var(--sunset-start);
+    }
 </style>
 
 <div class="container py-5 mt-2 mb-5">
@@ -103,16 +109,27 @@
                     </div>
 
                     <div class="mb-4">
+                        <label for="address" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Service Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text input-group-text-custom border-end-0"><i class="fa-solid fa-map-location-dot text-sunset"></i></span>
+                            <input type="text" name="address" id="addressInput" class="form-control form-control-lg form-control-custom border-start-0" placeholder="Apartment, Street, Area..." required>
+                            <button class="btn btn-outline-secondary" type="button" id="btn-location-capture"><i class="fa-solid fa-location-crosshairs"></i> GPS</button>
+                        </div>
+                        <input type="hidden" name="lat" id="latInput">
+                        <input type="hidden" name="lng" id="lngInput">
+                        <div class="form-text small text-muted mt-2 fw-medium">Type your address or use the GPS button for more precision.</div>
+                    </div>
+
+                    <div class="mb-4">
                         <label for="description" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Describe the Job</label>
                         <textarea name="description" id="description" rows="5" class="form-control form-control-custom" 
                                   placeholder="E.g., I have a leaky pipe under the kitchen sink that needs fixing immediately..." required></textarea>
-                        <div class="form-text small text-muted mt-2 fw-medium">The more details you provide, the better {{ provider.user.first_name }} can prepare.</div>
                     </div>
 
                     <div class="p-4 mb-5 rounded-4 d-flex align-items-center" style="background-color: #FFF0F0; border-left: 4px solid var(--sunset-start);">
                         <i class="fa-solid fa-circle-info text-sunset fs-3 me-3"></i>
                         <p class="mb-0 small text-dark fw-medium">
-                            Your request will be sent securely. You won't be charged until the provider accepts and completes the job.
+                            The provider will see your exact location only after accepting the job.
                         </p>
                     </div>
 
@@ -129,9 +146,34 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Date restriction
         const dateInput = document.getElementById('service_date');
         const today = new Date().toISOString().split('T')[0];
         dateInput.setAttribute('min', today);
+
+        // GPS Capture Logic
+        const btnLocation = document.getElementById('btn-location-capture');
+        const addressInput = document.getElementById('addressInput');
+        const latInput = document.getElementById('latInput');
+        const lngInput = document.getElementById('lngInput');
+
+        btnLocation.addEventListener('click', function() {
+            btnLocation.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    latInput.value = position.coords.latitude;
+                    lngInput.value = position.coords.longitude;
+                    addressInput.value = "Location Pinned via GPS 📍";
+                    btnLocation.innerHTML = '<i class="fa-solid fa-check text-success"></i>';
+                    btnLocation.classList.add('border-success');
+                }, function(error) {
+                    alert("Unable to fetch location. Please type address manually.");
+                    btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        });
     });
 </script>
 {% endblock %}

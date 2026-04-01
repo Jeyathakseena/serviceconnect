@@ -18,6 +18,13 @@
         main { flex: 1 0 auto; }
         .navbar-brand { font-size: 1.5rem; letter-spacing: -0.5px; }
         footer a:hover { color: var(--sunset-start) !important; transition: 0.3s; }
+        
+        /* Animation for the SOS button */
+        @keyframes pulse-btn {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
     </style>
 </head>
 <body>
@@ -37,6 +44,12 @@
                     <li class="nav-item"><a class="nav-link text-dark px-3" href="{% url 'home' %}">Explore</a></li>
                     
                     {% if user.is_authenticated %}
+                        <li class="nav-item ms-lg-3 me-2 d-flex align-items-center">
+                            <button class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#sosModal" style="animation: pulse-btn 2s infinite;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> SOS
+                            </button>
+                        </li>
+                        
                         <li class="nav-item"><a class="nav-link text-dark px-3" href="{% url 'my_bookings' %}">My Bookings</a></li>
                         {% if user.profile.is_provider %}
                             <li class="nav-item"><a class="nav-link px-3 fw-bold text-sunset" href="{% url 'provider_dashboard' %}">Dashboard</a></li>
@@ -113,6 +126,46 @@
         </div>
     </footer>
 
+    <div class="modal fade" id="sosModal" tabindex="-1" aria-labelledby="sosModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger border-2" style="border-radius: 20px;">
+          <div class="modal-header bg-danger text-white" style="border-radius: 16px 16px 0 0;">
+            <h5 class="modal-title fw-bold" id="sosModalLabel"><i class="fa-solid fa-triangle-exclamation"></i> Emergency Dispatch</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-dark fw-medium">We will immediately ping the closest professionals to your current location.</p>
+            
+            <form action="{% url 'trigger_emergency' %}" method="POST" id="sosForm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">What is your emergency?</label>
+                    <select name="emergency_category" id="emergencyCategory" class="form-select form-select-lg" required>
+                        <option value="" disabled selected>Select category...</option>
+                        <option value="plumber">Burst Pipe / Plumbing Leak</option>
+                        <option value="electrician">Electrical Sparking / Outage</option>
+                        <option value="mechanic">Vehicle Breakdown</option>
+                        <option value="other">Other (Please specify)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 d-none" id="customCategoryDiv">
+                    <label class="form-label fw-bold text-danger">Specify what you need:</label>
+                    <input type="text" name="custom_category" id="customCategoryInput" class="form-control form-control-lg" placeholder="e.g. Broken Window Glass">
+                </div>
+
+                <input type="hidden" name="user_lat" id="sos_lat" required>
+                <input type="hidden" name="user_lng" id="sos_lng" required>
+
+                <button type="button" id="sosSubmitBtn" class="btn btn-danger w-100 fw-bold py-3 rounded-pill mt-3">
+                    <i class="fa-solid fa-tower-broadcast"></i> BROADCAST SOS NOW
+                </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -125,50 +178,96 @@
         const latInput = document.getElementById('userLat');
         const lngInput = document.getElementById('userLng');
 
-        if (!input || !dropdown) return;
+        if (input && dropdown) {
+            input.addEventListener('click', function(e) {
+                dropdown.style.display = 'block';
+                e.stopPropagation();
+            });
 
-        input.addEventListener('click', function(e) {
-            dropdown.style.display = 'block';
-            e.stopPropagation();
-        });
-
-        useLocation.addEventListener('click', function() {
-            dropdown.style.display = 'none';
-            input.value = "Detecting your location...";
-            badge.style.display = 'none';
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        input.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                        latInput.value = lat;
-                        lngInput.value = lng;
-                        badge.style.display = 'block';
-                    }, 
-                    function(error) {
-                        input.value = "";
-                        alert("Location access denied. Please enter manually.");
-                    }
-                );
-            }
-        });
-
-        manualLocation.addEventListener('click', function() {
-            dropdown.style.display = 'none';
-            badge.style.display = 'none';
-            latInput.value = "";
-            lngInput.value = "";
-            input.value = "";
-            input.focus();
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.location-wrapper')) {
+            useLocation.addEventListener('click', function() {
                 dropdown.style.display = 'none';
-            }
-        });
+                input.value = "Detecting your location...";
+                badge.style.display = 'none';
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            input.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                            latInput.value = lat;
+                            lngInput.value = lng;
+                            badge.style.display = 'block';
+                        }, 
+                        function(error) {
+                            input.value = "";
+                            alert("Location access denied. Please enter manually.");
+                        }
+                    );
+                }
+            });
+
+            manualLocation.addEventListener('click', function() {
+                dropdown.style.display = 'none';
+                badge.style.display = 'none';
+                latInput.value = "";
+                lngInput.value = "";
+                input.value = "";
+                input.focus();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.location-wrapper')) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // --- NEW: SOS Logic ---
+        const categorySelect = document.getElementById('emergencyCategory');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const customDiv = document.getElementById('customCategoryDiv');
+                const customInput = document.getElementById('customCategoryInput');
+                if (this.value === 'other') {
+                    customDiv.classList.remove('d-none');
+                    customInput.setAttribute('required', 'required');
+                } else {
+                    customDiv.classList.add('d-none');
+                    customInput.removeAttribute('required');
+                }
+            });
+        }
+
+        const sosBtn = document.getElementById('sosSubmitBtn');
+        if (sosBtn) {
+            sosBtn.addEventListener('click', function() {
+                const btn = this;
+                const form = document.getElementById('sosForm');
+                
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Locating you...';
+                btn.disabled = true;
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        document.getElementById('sos_lat').value = position.coords.latitude;
+                        document.getElementById('sos_lng').value = position.coords.longitude;
+                        form.submit();
+                    }, function(error) {
+                        alert("We need your location to dispatch emergency help! Please allow location access.");
+                        btn.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> BROADCAST SOS NOW';
+                        btn.disabled = false;
+                    });
+                } else {
+                    alert("Geolocation is not supported by this browser.");
+                }
+            });
+        }
     });
     </script>
 </body>

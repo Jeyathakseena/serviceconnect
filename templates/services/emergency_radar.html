@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}SOS Radar | ServiceConnect{% endblock %}
+
+{% block content %}
+<style>
+    /* CSS for a cool pulsing radar animation */
+    .radar-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 50px auto;
+    }
+    .radar-core {
+        width: 150px;
+        height: 150px;
+        background-color: #FF4747;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        position: absolute;
+        z-index: 2;
+        box-shadow: 0 0 20px rgba(255, 71, 71, 0.5);
+    }
+    .radar-pulse {
+        width: 150px;
+        height: 150px;
+        background-color: #FF4747;
+        border-radius: 50%;
+        position: absolute;
+        z-index: 1;
+        animation: pulse 2s infinite ease-out;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
+    }
+</style>
+
+<div class="container text-center py-5 mt-5">
+    <h1 class="fw-extrabold text-danger mb-3">SOS Beacon Active</h1>
+    <p class="fs-5 text-muted">Broadcasting to all available <strong>{{ emergency.service_category|title }}s</strong> within 5km...</p>
+
+    <div class="radar-container">
+        <div class="radar-pulse"></div>
+        <div class="radar-core">
+            <i class="fa-solid fa-tower-broadcast"></i>
+        </div>
+    </div>
+
+    <div class="card auth-card mx-auto mt-5" style="max-width: 500px;">
+        <h5 class="fw-bold mb-3">Status: <span class="text-warning">Searching...</span></h5>
+        <p class="text-muted small">Please do not close this page. We are pinging nearby professionals. The first to accept will be dispatched immediately.</p>
+        
+        <script>
+            setTimeout(function() {
+                window.location.reload();
+            }, 3000); 
+        </script>
+    </div>
+</div>
+{% endblock %}

@@ -4,6 +4,78 @@
 {% block title %}Provider Dashboard | ServiceConnect{% endblock %}
 
 {% block content %}
+
+<div id="sosAlertBox" class="container mt-4 d-none">
+    <div class="card border-danger border-2 shadow-lg" style="animation: pulse-btn 1.5s infinite;">
+        <div class="card-header bg-danger text-white fw-bold h5 mb-0">
+            <i class="fa-solid fa-triangle-exclamation fa-fade me-2"></i> NEW EMERGENCY DISPATCH
+        </div>
+        <div class="card-body bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1" id="sosCategory">Plumbing Leak</h4>
+                    <p class="text-muted mb-0"><i class="fa-solid fa-location-arrow text-danger me-1"></i> <span id="sosDistance">2.4</span> km away &bull; <span id="sosTime">1</span> min ago</p>
+                </div>
+                <form id="sosAcceptForm" method="POST" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow">
+                        ACCEPT JOB
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("🚨 SOS Radar System Initialized! Waiting for emergencies...");
+    
+    let notifiedIds = []; // Keep track so phone doesn't vibrate every 5 secs for the same job
+
+    function checkEmergencies() {
+        console.log("📡 Pinging server for emergencies...");
+        
+        fetch("{% url 'check_emergencies' %}")
+            .then(response => {
+                if (!response.ok) console.error("Server error:", response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log("📦 Emergencies found:", data.emergencies.length);
+                
+                const alertBox = document.getElementById('sosAlertBox');
+                
+                if (data.emergencies.length > 0) {
+                    const job = data.emergencies[0]; 
+                    console.log("🔥 INCOMING SOS:", job);
+                    
+                    document.getElementById('sosCategory').innerText = job.category;
+                    document.getElementById('sosDistance').innerText = job.distance;
+                    document.getElementById('sosTime').innerText = job.time_ago;
+                    document.getElementById('sosAcceptForm').action = `/sos/accept/${job.id}/`; 
+                    
+                    alertBox.classList.remove('d-none'); 
+
+                    if (!notifiedIds.includes(job.id)) {
+                        notifiedIds.push(job.id);
+                        if ("vibrate" in navigator) {
+                            console.log("📳 Triggering Phone Vibration!");
+                            navigator.vibrate([300, 100, 300, 100, 800]); 
+                        }
+                    }
+                } else {
+                    alertBox.classList.add('d-none');
+                }
+            })
+            .catch(error => console.error('❌ Fetch Error:', error));
+    }
+
+    setInterval(checkEmergencies, 5000);
+    checkEmergencies(); 
+});
+</script>
+
 <div class="container py-5 mt-2 mb-5">
     <div class="row align-items-center mb-5">
         <div class="col-md-8">
@@ -77,16 +149,22 @@
                             <div>
                                 <h5 class="fw-bold mb-1 text-dark">Customer: {{ booking.user.get_full_name }}</h5>
                                 <p class="text-muted small fw-medium mb-0"><i class="fa-regular fa-envelope me-1"></i> {{ booking.user.email }}</p>
+                                
+                                {% if booking.status == 'confirmed' %}
+                                <div class="mt-2 text-success small fw-bold">
+                                    <i class="fa-solid fa-location-dot me-1"></i> Address: {{ booking.address }}
+                                </div>
+                                {% endif %}
                             </div>
                             
                             {% if booking.status == 'pending' %}
-                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-circle-half-stroke me-1"></i> Pending Review</span>
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">Pending</span>
                             {% elif booking.status == 'confirmed' %}
-                                <span class="badge bg-info text-white px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-calendar-check me-1"></i> Confirmed</span>
+                                <span class="badge bg-info text-white px-3 py-2 rounded-pill shadow-sm">Confirmed</span>
                             {% elif booking.status == 'completed' %}
-                                <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-check-double me-1"></i> Completed</span>
+                                <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm">Completed</span>
                             {% else %}
-                                <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">Cancelled</span>
                             {% endif %}
                         </div>
 
@@ -99,6 +177,12 @@
                                 <a href="{% url 'update_booking' booking.id 'confirmed' %}" class="btn btn-success rounded-pill px-4 btn-sm fw-bold shadow-sm">Accept Job</a>
                                 <a href="{% url 'update_booking' booking.id 'cancelled' %}" class="btn btn-outline-danger rounded-pill px-4 btn-sm fw-bold">Decline</a>
                             {% elif booking.status == 'confirmed' %}
+                                {% if booking.latitude and booking.longitude %}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ booking.latitude }},{{ booking.longitude }}" 
+                                   target="_blank" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm">
+                                   <i class="fa-solid fa-route me-1"></i> Navigate
+                                </a>
+                                {% endif %}
                                 <a href="{% url 'update_booking' booking.id 'completed' %}" class="btn btn-sunset rounded-pill px-4 btn-sm fw-bold">Mark as Done</a>
                             {% endif %}
                         </div>
@@ -112,7 +196,6 @@
                 <i class="fa-regular fa-calendar-xmark fa-3x text-muted opacity-25"></i>
             </div>
             <h4 class="fw-bold text-muted">No bookings yet!</h4>
-            <p class="text-muted small mb-0">When customers book your services, they will appear here.</p>
         </div>
         {% endfor %}
     </div>
