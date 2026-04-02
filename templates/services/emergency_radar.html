@@ -41,7 +41,7 @@
 
 <div class="container text-center py-5 mt-5">
     <h1 class="fw-extrabold text-danger mb-3">SOS Beacon Active</h1>
-    <p class="fs-5 text-muted">Broadcasting to all available <strong>{{ emergency.service_category|title }}s</strong> within 5km...</p>
+    <p class="fs-5 text-muted">Broadcasting to all available <strong>{{ emergency.service_category|title }}s</strong> within 30km...</p>
 
     <div class="radar-container">
         <div class="radar-pulse"></div>
@@ -50,14 +50,35 @@
         </div>
     </div>
 
-    <div class="card auth-card mx-auto mt-5" style="max-width: 500px;">
-        <h5 class="fw-bold mb-3">Status: <span class="text-warning">Searching...</span></h5>
-        <p class="text-muted small">Please do not close this page. We are pinging nearby professionals. The first to accept will be dispatched immediately.</p>
+    <div class="card border-0 shadow-lg mx-auto mt-5 p-4 p-md-5 rounded-4" style="max-width: 550px; background: #ffffff;">
         
+        <div class="d-flex align-items-center justify-content-center mb-3">
+            <div class="spinner-grow text-warning me-3" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
+            <h4 class="fw-bold mb-0 text-dark">Status: <span class="text-warning">Searching...</span></h4>
+        </div>
+        
+        <p class="text-muted mb-4" style="font-size: 1.05rem;">Please do not close this page. We are pinging nearby professionals. The first to accept will be dispatched immediately.</p>
+        
+        <hr class="text-muted opacity-10 mb-4">
+
+        <form action="{% url 'cancel_emergency' emergency.id %}" method="POST" class="text-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger rounded-pill fw-bold px-5 py-3 shadow hover-zoom">
+                <i class="fa-solid fa-xmark me-2"></i> Cancel SOS Broadcast
+            </button>
+        </form>
+
         <script>
-            setTimeout(function() {
-                window.location.reload();
-            }, 3000); 
+            function checkEmergencyStatus() {
+                fetch(window.location.href)
+                    .then(response => {
+                        if (response.url !== window.location.href) {
+                            window.location.href = response.url; 
+                        }
+                    })
+                    .catch(error => console.log('Radar ping failed:', error));
+            }
+            setInterval(checkEmergencyStatus, 3000);
         </script>
     </div>
 </div>

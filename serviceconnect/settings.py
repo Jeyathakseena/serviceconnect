@@ -118,5 +118,8 @@ LOGIN_URL = '/accounts/login/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Tell Django to use our custom login backend (allows Username OR Email)
+AUTHENTICATION_BACKENDS = ['accounts.backends.EmailOrUsernameModelBackend']
+
 # Load the API key from the .env file securely
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')

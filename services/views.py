@@ -130,6 +130,18 @@ def create_booking(request, provider_id):
         lat = request.POST.get('lat')
         lng = request.POST.get('lng')
         
+        # NEW SECURITY CHECK: Prevent Double Booking
+        overlap_exists = Booking.objects.filter(
+            provider=provider,
+            service_date=service_date,
+            service_time=service_time,
+            status='confirmed'
+        ).exists()
+
+        if overlap_exists:
+            messages.error(request, "This professional already has a confirmed booking at that exact date and time. Please select a different slot.")
+            return redirect('provider_profile', provider_id=provider.id)
+        
         Booking.objects.create(
             user=request.user,
             provider=provider,
@@ -250,6 +262,20 @@ def emergency_radar(request, emergency_id):
         
     return render(request, 'services/emergency_radar.html', {'emergency': emergency})
 
+# NEW: Allow users to cancel their active broadcast
+@login_required
+def cancel_emergency(request, emergency_id):
+    if request.method == 'POST':
+        emergency = get_object_or_404(EmergencyJob, id=emergency_id, customer=request.user)
+        if emergency.status == 'searching':
+            # Setting it to cancelled removes it from all provider radars instantly
+            emergency.status = 'cancelled' 
+            emergency.save()
+            messages.info(request, "Your SOS Broadcast has been safely cancelled.")
+        else:
+            messages.warning(request, "Too late! A professional has already accepted your request.")
+    return redirect('home')
+
 @login_required
 def check_emergencies(request):
     """ API Endpoint: Checks if this provider is in the Top 10 closest for any active emergency """
@@ -329,7 +355,7 @@ def accept_emergency(request, emergency_id):
                 )
                 messages.success(request, f"SOS Accepted! You are now dispatched to help {emergency.customer.first_name}.")
             else:
-                messages.error(request, "Too slow! Another professional just claimed this emergency.")
+                messages.error(request, "Too slow! Another professional just claimed this emergency or it was cancelled.")
         except ServiceProvider.DoesNotExist:
             pass
             

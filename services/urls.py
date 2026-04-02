@@ -16,8 +16,10 @@ urlpatterns = [
     path('dashboard/', views.provider_dashboard, name='provider_dashboard'),
     path('review/<int:booking_id>/', views.submit_review, name='submit_review'),
 
+    # SOS System
     path('sos/trigger/', views.trigger_emergency, name='trigger_emergency'),
     path('sos/radar/<int:emergency_id>/', views.emergency_radar, name='emergency_radar'),
+    path('sos/cancel/<int:emergency_id>/', views.cancel_emergency, name='cancel_emergency'), # NEW ROUTE
 
     path('api/check-emergencies/', views.check_emergencies, name='check_emergencies'),
     path('sos/accept/<int:emergency_id>/', views.accept_emergency, name='accept_emergency'),

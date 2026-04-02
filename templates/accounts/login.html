@@ -21,7 +21,7 @@
                 {% if form.errors %}
                     <div class="alert alert-danger rounded-4 text-sm shadow-sm border-0 mb-4 fw-medium" role="alert">
                         <i class="fa-solid fa-circle-exclamation me-2"></i>
-                        Your username and password didn't match. Please try again.
+                        Your login details didn't match. Please try again.
                     </div>
                 {% endif %}
 
@@ -29,12 +29,12 @@
                     {% csrf_token %}
                     
                     <div class="mb-4">
-                        <label for="username" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Username</label>
+                        <label for="username" class="form-label fw-extrabold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Username or Email Address</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted rounded-start-3 px-3">
                                 <i class="fa-solid fa-user"></i>
                             </span>
-                            <input type="text" name="username" id="username" class="form-control form-control-lg bg-light border-0 shadow-none rounded-end-3 fs-6 fw-medium py-3" placeholder="Enter your username" required autofocus>
+                            <input type="text" name="username" id="username" class="form-control form-control-lg bg-light border-0 shadow-none rounded-end-3 fs-6 fw-medium py-3" placeholder="Enter your username or email" required autofocus>
                         </div>
                     </div>
 

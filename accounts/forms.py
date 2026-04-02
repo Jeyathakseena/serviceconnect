@@ -21,6 +21,12 @@ class UserRegisterForm(UserCreationForm):
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already registered. Please log in.")
+        return email        
+
 
 class ServiceProviderForm(forms.ModelForm):
     """
