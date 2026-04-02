@@ -366,8 +366,8 @@ def accept_emergency(request, emergency_id):
 # ==========================================
 
 # 1. NEW IMPORTS
-from google import genai
-from google.genai import errors
+import google.generativeai as genai
+from google.api_core import exceptions as errors
 
 SYSTEM_INSTRUCTION = """
 # ROLE & IDENTITY
