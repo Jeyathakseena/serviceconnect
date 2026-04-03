@@ -21,7 +21,7 @@ SECRET_KEY = 'django-insecure-replace-this-with-your-own-secret-key'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['serviceconnect-app.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
