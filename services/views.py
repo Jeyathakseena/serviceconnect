@@ -39,7 +39,7 @@ def homepage(request):
     top_providers = ServiceProvider.objects.all().order_by('-recommendation_score')[:6]
     context = {
         'top_providers': top_providers,
-        'SERVICE_CATEGORIES': get_dynamic_categories(), # CHANGED HERE
+        'SERVICE_CATEGORIES': get_dynamic_categories(), 
     }
     return render(request, 'services/home.html', context)
 
@@ -92,7 +92,7 @@ def search_providers(request):
         'filter_by': filter_by,
         'user_lat': user_lat,
         'user_lng': user_lng,
-        'SERVICE_CATEGORIES': get_dynamic_categories(), # CHANGED HERE
+        'SERVICE_CATEGORIES': get_dynamic_categories(), 
     }
     return render(request, 'services/search_results.html', context)
 
@@ -223,11 +223,13 @@ def submit_review(request, booking_id):
 @login_required
 def trigger_emergency(request):
     if request.method == 'POST':
-        category = request.POST.get('emergency_category')
+        category = request.POST.get('emergency_category', '').strip().lower()
         
-        # NEW: Check if they selected "Other" and grab the custom text
+        # FIXED: Properly capture and format the custom category
         if category == 'other':
-            category = request.POST.get('custom_category')
+            custom = request.POST.get('custom_category', '').strip().lower()
+            if custom:
+                category = custom
             
         lat = request.POST.get('user_lat')
         lng = request.POST.get('user_lng')
@@ -296,12 +298,20 @@ def check_emergencies(request):
     
     my_alerts = []
     for emergency in active_emergencies:
-        # Only notify if categories match (or if it's a custom 'other' emergency)
-        if emergency.service_category != 'other' and emergency.service_category.lower() != provider.service_category.lower():
+        em_cat = emergency.service_category.lower()
+        prov_cat = provider.service_category.lower()
+
+        # FIXED: Only notify if categories match EXACTLY, or if it's a blank "other" emergency
+        if em_cat != 'other' and em_cat != prov_cat:
             continue 
 
         # 3. The Math: Find all eligible providers and calculate their distances
-        all_eligible = ServiceProvider.objects.filter(service_category=provider.service_category).exclude(latitude__isnull=True)
+        if em_cat == 'other':
+            # If user left it totally blank, ping everyone
+            all_eligible = ServiceProvider.objects.exclude(latitude__isnull=True)
+        else:
+            # Case insensitive exact match for their typed category (e.g., tutors)
+            all_eligible = ServiceProvider.objects.filter(service_category__iexact=em_cat).exclude(latitude__isnull=True)
         
         provider_distances = []
         for p in all_eligible:
@@ -320,7 +330,7 @@ def check_emergencies(request):
             
             my_alerts.append({
                 'id': emergency.id,
-                'category': emergency.service_category.title() if emergency.service_category != 'other' else 'Custom Request',
+                'category': emergency.service_category.title() if emergency.service_category != 'other' else 'General Emergency',
                 'distance': round(my_distance, 1),
                 'time_ago': time_ago
             })
@@ -365,7 +375,6 @@ def accept_emergency(request, emergency_id):
 # AI SUPPORT CHATBOT
 # ==========================================
 
-# 1. NEW IMPORTS
 from google import genai
 from google.api_core import exceptions as errors
 
@@ -417,10 +426,8 @@ def chatbot_api(request):
         full_prompt = f"{SYSTEM_INSTRUCTION}\n\nUser Question: {user_message}"
 
         try:
-            # 2. NEW SDK INITIALIZATION
             client = genai.Client(api_key=settings.GEMINI_API_KEY)
             
-            # 3. NEW GENERATE CONTENT SYNTAX
             response = client.models.generate_content(
                 model='gemini-2.5-flash', 
                 contents=full_prompt
@@ -432,7 +439,6 @@ def chatbot_api(request):
                 return JsonResponse({'reply': "I heard you, but I couldn't generate an answer. Try asking differently!"})
             
         except errors.APIError as e:
-            # Check for the Free Tier Rate Limit (Error 429)
             if e.code == 429:
                 return JsonResponse({'reply': "Vanakkam! I'm handling too many requests right now. Please try again in a minute, or email support@serviceconnect.in!"})
             

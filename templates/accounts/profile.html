@@ -139,10 +139,20 @@
                                         <label class="form-label fw-medium text-muted small">{{ sp_form.custom_category.label }}</label>
                                         {{ sp_form.custom_category }}
                                     </div>
+                                    
                                     <div class="col-md-6">
                                         <label class="form-label fw-medium text-muted small">City / Location</label>
-                                        {{ sp_form.location }}
+                                        <div class="input-group">
+                                            {{ sp_form.location }}
+                                            <button class="btn btn-outline-secondary" type="button" id="btn-location-capture">
+                                                <i class="fa-solid fa-location-crosshairs"></i> GPS
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="latitude" id="latInput">
+                                        <input type="hidden" name="longitude" id="lngInput">
+                                        <div class="form-text small text-muted fw-medium mt-1">Pin your exact GPS so customers can find you accurately.</div>
                                     </div>
+
                                     <div class="col-md-3">
                                         <label class="form-label fw-medium text-muted small">Experience (Years)</label>
                                         {{ sp_form.experience_years }}
@@ -192,10 +202,37 @@
         }
     }
 
-    // Auto-open edit mode if Django returns form validation errors
     document.addEventListener('DOMContentLoaded', function() {
+        // Auto-open edit mode if Django returns form validation errors
         if (document.querySelector('.errorlist')) {
             toggleEditMode();
+        }
+
+        // GPS Capture Logic for Provider Profile Update
+        const btnLocation = document.getElementById('btn-location-capture');
+        const latInput = document.getElementById('latInput');
+        const lngInput = document.getElementById('lngInput');
+
+        if (btnLocation) {
+            btnLocation.addEventListener('click', function() {
+                btnLocation.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        // 1. Silently save the exact coordinates to the hidden inputs
+                        latInput.value = position.coords.latitude;
+                        lngInput.value = position.coords.longitude;
+                        
+                        // 2. Only change the BUTTON text, leave the City input alone!
+                        btnLocation.innerHTML = '<i class="fa-solid fa-check"></i> Pinned!';
+                        btnLocation.classList.add('border-success', 'text-success', 'bg-success-light');
+                    }, function(error) {
+                        alert("Unable to fetch location. Please type your city manually.");
+                        btnLocation.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> GPS';
+                    });
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                }
+            });
         }
     });
 </script>

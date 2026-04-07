@@ -14,7 +14,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="fw-bold text-dark mb-1" id="sosCategory">Plumbing Leak</h4>
-                    <p class="text-muted mb-0"><i class="fa-solid fa-location-arrow text-danger me-1"></i> <span id="sosDistance">2.4</span> km away &bull; <span id="sosTime">1</span> min ago</p>
+                    <p class="text-muted mb-0"><i class="fa-solid fa-location-arrow text-danger me-1"></i> <span id="sosDistance">2.4</span> km away • <span id="sosTime">1</span> min ago</p>
                 </div>
                 <form id="sosAcceptForm" method="POST" action="">
                     {% csrf_token %}
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setInterval(checkEmergencies, 5000);
-    checkEmergencies(); 
+    checkCheckEmergencies(); 
 });
 </script>
 
@@ -179,8 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif booking.status == 'confirmed' %}
                                 {% if booking.latitude and booking.longitude %}
                                 <a href="https://www.google.com/maps/search/?api=1&query={{ booking.latitude }},{{ booking.longitude }}" 
-                                   target="_blank" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm">
-                                   <i class="fa-solid fa-route me-1"></i> Navigate
+                                   target="_blank" class="btn btn-primary rounded-pill px-4 btn-sm fw-bold shadow-sm navigate-btn">
+                                   <i class="fa-solid fa-route"></i> Navigate
                                 </a>
                                 {% endif %}
                                 <a href="{% url 'update_booking' booking.id 'completed' %}" class="btn btn-sunset rounded-pill px-4 btn-sm fw-bold">Mark as Done</a>

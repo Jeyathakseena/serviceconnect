@@ -134,7 +134,7 @@
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-sunset btn-lg py-3 fw-extrabold fs-5 rounded-pill shadow">
+                        <button type="submit" onclick="this.disabled=true; this.innerHTML='<i class=\'fa-solid fa-spinner fa-spin me-2\'></i>Confirming...'; this.form.submit();" class="btn btn-sunset btn-lg py-3 fw-extrabold fs-5 rounded-pill shadow">
                             Confirm Request <i class="fa-solid fa-paper-plane ms-2"></i>
                         </button>
                     </div>

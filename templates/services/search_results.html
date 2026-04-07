@@ -113,11 +113,16 @@
                 </div>
                 
                 <div class="w-100 text-start small mb-4 bg-light p-3 rounded-4">
-                    <div class="d-flex justify-content-between mb-2"><span class="text-muted fw-medium">Location</span><span class="fw-bold text-dark">{{ provider.location }}</span></div>
-                    
-                    {% if provider.distance_km is not None %}
-                        <div class="d-flex justify-content-between mb-2"><span class="text-muted fw-medium">Distance</span><span class="fw-bold text-sunset"><i class="fa-solid fa-location-dot me-1"></i> {{ provider.distance_km }} km away</span></div>
-                    {% endif %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-medium">Location</span>
+                        <span class="fw-bold text-dark">
+                            {% if provider.distance_km is not None %}
+                                <span class="text-sunset"><i class="fa-solid fa-location-dot me-1"></i> {{ provider.distance_km }} km away</span>
+                            {% else %}
+                                {{ provider.location }}
+                            {% endif %}
+                        </span>
+                    </div>
                     
                     <div class="d-flex justify-content-between mb-2"><span class="text-muted fw-medium">Experience</span><span class="fw-bold text-dark">{{ provider.experience_years }} Years</span></div>
                     <div class="d-flex justify-content-between mb-0"><span class="text-muted fw-medium">Hourly Rate</span><span class="fw-bold text-success">₹{{ provider.hourly_rate }}/hr</span></div>

@@ -157,4 +157,15 @@
         border-color: #FFA372 !important;
     }
 </style>
+
+<script>
+    // Ask the phone for exact GPS coordinates when the page loads
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            // Assuming you have hidden inputs in your form for lat and lng
+            document.getElementById('id_latitude').value = position.coords.latitude;
+            document.getElementById('id_longitude').value = position.coords.longitude;
+        });
+    }
+</script>
 {% endblock %}

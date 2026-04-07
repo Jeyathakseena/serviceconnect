@@ -154,3 +154,50 @@ body {
         margin-bottom: 5px;
     }
 }
+
+/* =========================================
+   FIXED: NAVIGATE BUTTON ALIGNMENT
+   ========================================= */
+.navigate-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    height: 42px !important; /* Forces a consistent height */
+    line-height: 1 !important; /* Removes extra space above/below letters */
+}
+
+.navigate-btn i {
+    margin-right: 8px !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+}
+
+/* =========================================
+   FIXED: AI CHATBOT BUTTON STYLING
+   ========================================= */
+.chatbot-launcher {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50% !important;
+    border: 3px solid white !important;
+    background: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.chatbot-launcher:hover {
+    transform: scale(1.1) !important;
+}
+
+.chatbot-launcher img {
+    width: 60% !important;
+    height: auto !important;
+    object-fit: contain !important;
+}

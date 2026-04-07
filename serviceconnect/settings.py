@@ -31,9 +31,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'accounts',  # Added Day 2
-    'services',  # Added Day 2
+    'django.contrib.staticfiles', # Added Day 2
+    'cloudinary_storage',
+    'cloudinary',
+    'accounts',
+    'services',
 ]
 
 MIDDLEWARE = [
@@ -114,6 +116,21 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
 # Added Day 2: Media files for user uploads (like profile pictures)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -130,3 +147,8 @@ AUTHENTICATION_BACKENDS = ['accounts.backends.EmailOrUsernameModelBackend']
 
 # Load the API key from the .env file securely
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+# Force Django to recognize Render's secure HTTPS connection
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
