@@ -26,7 +26,7 @@ ALLOWED_HOSTS = ['serviceconnect-s8q9.onrender.com', '127.0.0.1', 'localhost', '
 
 # Production Security Headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = ['https://serviceconnect-s8q9.onrender.com', 'https://*.onrender.com']
