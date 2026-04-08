@@ -22,6 +22,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-local')
 DEBUG = False
 
 ALLOWED_HOSTS = ['serviceconnect-s8q9.onrender.com', '127.0.0.1', 'localhost']
+CSRF_TRUSTED_ORIGINS = ['https://serviceconnect-s8q9.onrender.com']
 
 
 # Application definition
@@ -73,9 +74,10 @@ WSGI_APPLICATION = 'serviceconnect.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        # This tells Django: Use SQLite on my laptop, but use Postgres on Render.
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
-        conn_max_age=600
+        # Look for DATABASE_URL in Render's environment
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+        ssl_require=True # Neon and most production DBs require SSL
     )
 }
 
