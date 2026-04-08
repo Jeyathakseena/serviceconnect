@@ -120,25 +120,19 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# settings.py
 
-# Use Django's default, safe static file handler
-# settings.py
-
-# Put WhiteNoise back in charge of static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Tell Django to just safely copy the files without strictly checking them
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# THE MAGIC LINE: This stops the server from crashing if a tiny file (like ka.js) is missing!
-WHITENOISE_MANIFEST_STRICT = False
 
 
 
