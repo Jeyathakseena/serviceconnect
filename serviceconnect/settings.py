@@ -21,8 +21,17 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-local')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['serviceconnect-s8q9.onrender.com', '127.0.0.1', 'localhost']
+# settings.py
+
+# Add a wildcard for Render just to get it back online first
+ALLOWED_HOSTS = ['serviceconnect-s8q9.onrender.com', '127.0.0.1', 'localhost', '.onrender.com']
+
+# Ensure HTTPS is trusted for your specific URL
 CSRF_TRUSTED_ORIGINS = ['https://serviceconnect-s8q9.onrender.com']
+
+# These two lines help Cloudflare talk to Render securely
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False # Keep this False until the site is actually loading
 
 
 # Application definition
@@ -72,14 +81,18 @@ WSGI_APPLICATION = 'serviceconnect.wsgi.application'
 
 
 # Database
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
-        # Look for DATABASE_URL in Render's environment
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600,
-        ssl_require=True # Neon and most production DBs require SSL
     )
 }
+
+# Only apply production DB settings if we are actually on Render
+if not DEBUG:
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 
 # Password validation
