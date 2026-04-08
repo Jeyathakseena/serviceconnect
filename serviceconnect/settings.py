@@ -34,14 +34,14 @@ CSRF_TRUSTED_ORIGINS = ['https://serviceconnect-s8q9.onrender.com', 'https://*.o
 # ==============================================================================
 # APPLICATION DEFINITION
 # ==============================================================================
-INSTALLED_APPS = [
-    'cloudinary_storage',  # Must be before staticfiles
+INSTALLED_APPS = [  # Must be before staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
     'cloudinary',
     'accounts',
     'services',
@@ -129,7 +129,7 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 
