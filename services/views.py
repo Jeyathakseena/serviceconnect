@@ -444,7 +444,7 @@ def chatbot_api(request):
             # 4. Generate content using the stable model name
             # Note: Using 'gemini-1.5-flash' or 'gemini-2.0-flash' is the safest for live demos
             response = client.models.generate_content(
-                model='gemini-2.0-flash', 
+                model='gemini-2.5-flash', 
                 contents=full_prompt
             )
             
