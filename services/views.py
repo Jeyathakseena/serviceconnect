@@ -412,6 +412,15 @@ Your knowledge is strictly limited to the following platform features:
 - Include a warm touch of South Indian hospitality where it feels natural (e.g., "Vanakkam!").
 """
 
+import os
+from django.conf import settings
+from django.http import JsonResponse
+from google import genai  # Ensure this matches your installation
+from dotenv import load_dotenv
+
+# Load .env variables at the top of the file
+load_dotenv()
+
 def chatbot_api(request):
     """ Handles AJAX requests from the floating chat window """
     if request.method == "POST":
@@ -420,33 +429,35 @@ def chatbot_api(request):
         if not user_message:
             return JsonResponse({'reply': "Please type a message."})
 
-        if not getattr(settings, 'GEMINI_API_KEY', None):
-            return JsonResponse({'reply': "I'm currently offline as my API Key hasn't been set up yet! Please contact support."})
+        # 1. Get the API Key from settings
+        api_key = getattr(settings, 'GEMINI_API_KEY', None)
+        if not api_key:
+            return JsonResponse({'reply': "I'm offline (API Key missing). Please check settings!"})
 
+        # 2. Build the full prompt with your system instructions
         full_prompt = f"{SYSTEM_INSTRUCTION}\n\nUser Question: {user_message}"
 
         try:
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            # 3. Initialize the Client
+            client = genai.Client(api_key=api_key)
             
+            # 4. Generate content using the stable model name
+            # Note: Using 'gemini-1.5-flash' or 'gemini-2.0-flash' is the safest for live demos
             response = client.models.generate_content(
-                model='gemini-2.5-flash', 
+                model='gemini-2.0-flash', 
                 contents=full_prompt
             )
             
-            if response.text:
+            # 5. Check if the response actually contains text
+            if response and hasattr(response, 'text') and response.text:
                 return JsonResponse({'reply': response.text})
             else:
-                return JsonResponse({'reply': "I heard you, but I couldn't generate an answer. Try asking differently!"})
-            
-        except errors.APIError as e:
-            if e.code == 429:
-                return JsonResponse({'reply': "Vanakkam! I'm handling too many requests right now. Please try again in a minute, or email support@serviceconnect.in!"})
-            
-            print(f"DEBUG AI ERROR: {e}") 
-            return JsonResponse({'reply': "Oops, my circuits got crossed. Please check your internet connection and try again."})
+                return JsonResponse({'reply': "Vanakkam! I'm sorry, I can't answer that specific question. Try asking about our services!"})
             
         except Exception as e:
+            # THIS IS THE CRITICAL PART: 
+            # It catches the 500 error and sends a polite message instead of crashing.
             print(f"DEBUG AI ERROR: {e}") 
-            return JsonResponse({'reply': "Oops, my circuits got crossed. Please check your internet connection and try again."})
+            return JsonResponse({'reply': "Vanakkam! I'm handling many requests right now. Please try again in 10 seconds!"})
             
     return JsonResponse({'error': 'Invalid request'}, status=400)
